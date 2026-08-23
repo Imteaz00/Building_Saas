@@ -15,10 +15,10 @@ export class User {
   //   company_id
   //   tenant_id
 
-  @Column({ type: 'varchar', nullable: false, length: 255 })
+  @Column({ type: 'varchar', nullable: false, length: 100 })
   name: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 100, unique: true })
+  @Column({ type: 'varchar', nullable: false, length: 50, unique: true })
   email: string;
 
   @Column({ type: 'varchar', nullable: true, length: 15 })

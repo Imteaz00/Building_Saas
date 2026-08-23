@@ -15,3 +15,10 @@ All the notes while I build the backend will be here. Its to probably better to 
 - created dev db server in neon called Bookler Dev
 - added .env and example.env
 - installed @nestjs/config
+- db in connected to neon
+
+23 aug
+- partially defined user entity
+- made initial commit
+- snake_case for entity obviously
+- partially created company entity

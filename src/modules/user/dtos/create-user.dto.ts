@@ -10,12 +10,12 @@ import {
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(100)
   name: string;
 
   @IsNotEmpty()
   @IsEmail()
-  @MaxLength(100)
+  @MaxLength(50)
   email: string;
 
   @IsOptional()
@@ -25,7 +25,7 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(50)
   @MinLength(8)
   password: string;
 }

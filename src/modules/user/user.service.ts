@@ -12,15 +12,15 @@ export class UserService {
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
 
-  async createUser(user: CreateUserDto): Promise<User> {
+  async createUser(userDto: CreateUserDto): Promise<User> {
     const existingUser = await this.userRepository.findOne({
-      where: { email: user.email },
+      where: { email: userDto.email },
     });
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
 
-    let newUser = this.userRepository.create(user);
+    let newUser = this.userRepository.create(userDto);
     newUser = await this.userRepository.save(newUser);
     return newUser;
   }
