@@ -1,0 +1,17 @@
+All the notes while I build the backend will be here. Its to probably better to organize it further but separation is troublesome. So for now everything will be here.
+
+
+21 aug
+- NestJs for backend
+- Will try to inforce acyclic moduler architecture. Lets see how far it goes
+- for now following a table to module plan based on the er diagram
+- set "strictPropertyInitialization": false in tsconfig.json
+- installed class validator and class transformer
+- added a global validationPipe with whitelist and transform
+- install mapped types for partial type. Might need swagger types instead down the line
+
+22 aug
+- isntalled typeorm @nestjs/typeorm pg
+- created dev db server in neon called Bookler Dev
+- added .env and example.env
+- installed @nestjs/config
