@@ -3,29 +3,43 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Company } from '../company/company.entity';
 
 @Entity()
+@Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['company', 'phone'], { unique: true, where: 'deleted_at IS NULL' })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
   //   company_id
+  @ManyToOne(() => Company, (company) => company.id)
+  company: Company;
   //   tenant_id
 
   @Column({ type: 'varchar', nullable: false, length: 100 })
   name: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 50, unique: true })
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   email: string;
 
   @Column({ type: 'varchar', nullable: true, length: 15 })
   phone: string;
 
   //   role_enum
-  //   state_enum
+
+  @Column({
+    type: 'enum',
+    enum: ['pending activation', 'active', 'suspended', 'deactivated'],
+    nullable: false,
+    default: 'pending activation',
+  })
+  state: 'pending activation' | 'active' | 'suspended' | 'deactivated';
 
   @Column({ type: 'varchar', nullable: false })
   password_hash: string;

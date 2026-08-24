@@ -22,3 +22,5 @@ All the notes while I build the backend will be here. Its to probably better to 
 - made initial commit
 - snake_case for entity obviously
 - partially created company entity
+- added unqiue email contraints per company, minding soft delete
+- ManyToOne rel from user to company
