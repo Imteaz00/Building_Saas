@@ -1,8 +1,9 @@
 Here will try to note things I would like to implement as a checklist
 
 -As it is planned to be hosted on VPS, i would like to have full analatics
--might need to use validation on env. see nestjs Setting up a PostgreSQL database with TypeORM
-- soft delete email uniqueness concern, see imteaz gpt
+- might need to use validation on env. see nestjs Setting up a PostgreSQL database with TypeORM
+- soft delete email uniqueness concern, see imteaz gpt //done for now
+- dont forget migrations
 
 
 Frontend:

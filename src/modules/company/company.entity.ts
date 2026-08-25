@@ -3,11 +3,16 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from '../user/user.entity';
 
 @Entity()
+@Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['phone'], { unique: true, where: 'deleted_at IS NULL' })
 export class Company {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,7 +26,7 @@ export class Company {
   @Column({ type: 'text', nullable: false })
   address: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 50, unique: true })
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   email: string;
 
   @Column({ type: 'varchar', nullable: false, length: 15 })
@@ -42,6 +47,9 @@ export class Company {
   @Column({ type: 'varchar', nullable: false, length: 50 })
   time_zone: string;
 
+  @OneToMany(() => User, (user) => user.company)
+  users: User[];
+
   @CreateDateColumn()
   created_at: Date;
 
@@ -49,5 +57,5 @@ export class Company {
   updated_at: Date;
 
   @DeleteDateColumn()
-  deleted_at: Date;
+  deleted_at: Date | null;
 }
