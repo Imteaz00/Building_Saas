@@ -18,7 +18,7 @@ export class User {
   id: number;
 
   //   company_id
-  @ManyToOne(() => Company, (company) => company.id)
+  @ManyToOne(() => Company, (company) => company.users, { nullable: false })
   company: Company;
   //   tenant_id
 

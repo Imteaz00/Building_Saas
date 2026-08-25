@@ -9,7 +9,6 @@ import { UserModule } from './modules/user/user.module';
 import { appConfig } from './config/app.config';
 
 const ENV = process.env.NODE_ENV?.trim();
-
 @Module({
   imports: [
     CompanyModule,
@@ -24,7 +23,7 @@ const ENV = process.env.NODE_ENV?.trim();
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get('database.url'),
-        autoLoadEntities: configService.get('database.autoLoadEntities'),
+        autoLoadEntities: true,
         synchronize: configService.get('database.synchronize'),
       }),
     }),
