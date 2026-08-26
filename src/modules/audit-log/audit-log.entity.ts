@@ -40,10 +40,10 @@ export class AuditLog {
   targetId: string;
 
   @Column({ name: 'before_values', type: 'json', nullable: true })
-  beforeValues: string;
+  beforeValues: Record<string, unknown> | null;
 
   @Column({ name: 'after_values', type: 'json', nullable: true })
-  afterValues: string;
+  afterValues: Record<string, unknown> | null;
 
   @CreateDateColumn({ name: 'occurred_at' })
   occurredAt: Date;

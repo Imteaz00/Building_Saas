@@ -4,8 +4,10 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -48,7 +50,11 @@ export class Company {
   // @MaxLength(20) need to know the exact requirements
   taxRegistrationId: string;
 
-  @ManyToOne(() => Document, { nullable: true })
+  @OneToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn([
+    { name: 'logo_id', referencedColumnName: 'id' },
+    { name: 'id', referencedColumnName: 'companyId' },
+  ])
   logo: Document | null;
 
   @Column({

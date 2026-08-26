@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -17,10 +18,13 @@ export class Unit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Company, { nullable: false })
-  company: Company;
+  //company
 
   @ManyToOne(() => Building, { nullable: false })
+  @JoinColumn([
+    { name: 'building_id', referencedColumnName: 'id' },
+    { name: 'company_id', referencedColumnName: 'id' },
+  ])
   building: Building;
 
   @Column({ name: 'unit_number', type: 'varchar', nullable: false })
@@ -60,8 +64,7 @@ export class Unit {
     enum: ['occupied', 'vacant', 'reserved', 'unavailable'],
     nullable: false,
   })
-  occupancyStatus: 'occupied' | 'vacant' | 'reserved' | 'unavailabe';
-
+  occupancyStatus: 'occupied' | 'vacant' | 'reserved' | 'unavailable';
   @Column({ name: 'unavailable_reason', type: 'varchar', nullable: true })
   unavailableReason: string;
 

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -10,6 +11,7 @@ import {
 import { Company } from 'src/modules/company/company.entity';
 
 @Entity('building')
+@Index(['id', 'company'], { unique: true })
 export class Building {
   @PrimaryGeneratedColumn('uuid')
   id: string;

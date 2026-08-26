@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -11,6 +12,7 @@ import { Company } from '../../company/company.entity';
 import { User } from '../../user/user.entity';
 
 @Entity('document')
+@Index(['id', 'company'], { unique: true })
 export class Document {
   @PrimaryGeneratedColumn('uuid')
   id: string;

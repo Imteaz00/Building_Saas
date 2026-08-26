@@ -31,7 +31,7 @@ export class Role {
   action: 'view' | 'create' | 'edit' | 'delete' | 'approve';
 
   @Column({ type: 'enum', enum: ['F', 'E', 'V', 'O'], nullable: true })
-  type: 'F' | 'E' | 'V' | 'O';
+  type: 'F' | 'E' | 'V' | 'O' | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
