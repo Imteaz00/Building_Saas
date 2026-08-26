@@ -4,6 +4,13 @@ Here will try to note things I would like to implement as a checklist
 - might need to use validation on env. see nestjs Setting up a PostgreSQL database with TypeORM
 - soft delete email uniqueness concern, see imteaz gpt //done for now
 - dont forget migrations
+- should include userId with role?
+- whats target in notification delivery
+- might need to downgrade pg for warnings
+- need to know event key
+- need to add manager etc for building
+- left assets for future
+
 
 
 Frontend:

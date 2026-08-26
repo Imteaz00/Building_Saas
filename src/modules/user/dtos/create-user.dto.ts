@@ -3,14 +3,22 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
+  @IsUUID()
+  companyId: string;
+
+  @IsUUID()
+  tenantId?: string;
+
+  @IsNotEmpty()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(50)
   name: string;
 
   @IsNotEmpty()

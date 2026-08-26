@@ -14,15 +14,14 @@ import { Company } from '../company/company.entity';
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
 @Index(['company', 'phone'], { unique: true, where: 'deleted_at IS NULL' })
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  //   company_id
   @ManyToOne(() => Company, (company) => company.users, { nullable: false })
   company: Company;
   //   tenant_id
 
-  @Column({ type: 'varchar', nullable: false, length: 100 })
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   name: string;
 
   @Column({ type: 'varchar', nullable: false, length: 50 })
@@ -35,44 +34,51 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['pending activation', 'active', 'suspended', 'deactivated'],
+    enum: ['pending-activation', 'active', 'suspended', 'deactivated'],
     nullable: false,
-    default: 'pending activation',
+    default: 'pending-activation',
   })
-  state: 'pending activation' | 'active' | 'suspended' | 'deactivated';
+  state: 'pending-activation' | 'active' | 'suspended' | 'deactivated';
 
-  @Column({ type: 'varchar', nullable: false })
-  password_hash: string;
+  @Column({ name: 'password_hash', type: 'varchar', nullable: false })
+  passwordHash: string;
 
   @Column({
+    name: 'password_updated_at',
     type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  password_updated_at: Date;
-
-  @Column({ type: 'int', nullable: false, default: 0 })
-  failed_attempt_count: number;
-
-  @Column({ type: 'timestamp', nullable: true })
-  locked_until: Date | null;
+  passwordUpdatedAt: Date;
 
   @Column({
+    name: 'failed_attempt_count',
+    type: 'int',
+    nullable: false,
+    default: 0,
+  })
+  failedAttemptCount: number;
+
+  @Column({ name: 'locked_until', type: 'timestamp', nullable: true })
+  lockedUntil: Date | null;
+
+  @Column({
+    name: 'last_sign_in_at',
     type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  last_sign_in_at: Date;
+  lastSignInAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  deactivated_at: Date | null;
+  @Column({ name: 'deactivated_at', type: 'timestamp', nullable: true })
+  deactivatedAt: Date | null;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
 }

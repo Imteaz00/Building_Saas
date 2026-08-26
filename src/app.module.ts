@@ -6,6 +6,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompanyModule } from './modules/company/company.module';
 import { UserModule } from './modules/user/user.module';
+import { RoleModule } from './modules/role/role.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { DocumentModule } from './modules/document/document.module';
+import { PropertyModule } from './modules/property/property.module';
+import { AnnouncementModule } from './modules/announcement/announcement.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/databse.config';
 import envValidator from './config/env.validatior';
@@ -30,6 +36,12 @@ const ENV = process.env.NODE_ENV;
         synchronize: configService.get('database.synchronize'),
       }),
     }),
+    RoleModule,
+    AuditLogModule,
+    NotificationModule,
+    DocumentModule,
+    PropertyModule,
+    AnnouncementModule,
   ],
   controllers: [AppController],
   providers: [AppService],
