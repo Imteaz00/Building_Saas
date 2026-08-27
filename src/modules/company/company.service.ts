@@ -20,6 +20,8 @@ export class CompanyService {
       throw new Error('Company with this email or phone already exists');
     }
 
+    //handle logo
+
     const newCompany = this.companyRepository.create(companyDto);
     return this.companyRepository.save(newCompany);
   }

@@ -9,8 +9,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Company } from 'src/modules/company/company.entity';
-import { User } from 'src/modules/user/entities/user.entity';
+import { Company } from '../../company/company.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('notification_template')
 @Index(['company', 'eventKey', 'channel'], {

@@ -52,10 +52,7 @@ export class Company {
   taxRegistrationId: string;
 
   @OneToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn([
-    { name: 'logo_id', referencedColumnName: 'id' },
-    { name: 'id', referencedColumnName: 'company' },
-  ])
+  @JoinColumn([{ name: 'logo_id', referencedColumnName: 'id' }])
   logo: Document | null;
 
   @Column({

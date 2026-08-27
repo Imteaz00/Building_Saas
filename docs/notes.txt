@@ -39,7 +39,7 @@ All the notes while I build the backend will be here. Its to probably better to 
 
 26aug
 - notification template entity
-- versioning ommited for now
+- versioning omited for now
 - notification event entity
 - document and document link entity
 - building, unit and default charge entity

@@ -1,6 +1,12 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
+
 import { Document } from './document.entity';
-import { CreateDateColumn } from 'typeorm/browser/index.js';
 
 @Entity('document_link')
 export class DocumentLink {

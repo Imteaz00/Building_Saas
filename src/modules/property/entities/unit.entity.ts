@@ -21,10 +21,6 @@ export class Unit {
   //company
 
   @ManyToOne(() => Building, { nullable: false })
-  @JoinColumn([
-    { name: 'building_id', referencedColumnName: 'id' },
-    { name: 'company_id', referencedColumnName: 'company' },
-  ])
   building: Building;
 
   @Column({ name: 'unit_number', type: 'varchar', nullable: false })
@@ -39,10 +35,10 @@ export class Unit {
   unitType: 'apartment' | 'commercial' | 'parking' | 'common_area';
 
   @Column({ type: 'int', nullable: true })
-  floor: number;
+  floor: number | null;
 
   @Column({ type: 'int', nullable: true })
-  size: number;
+  size: number | null;
 
   @Column({
     name: 'size_unit',

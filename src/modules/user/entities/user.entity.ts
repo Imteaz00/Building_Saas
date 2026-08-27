@@ -28,7 +28,7 @@ export class User {
   @Column({ type: 'varchar', nullable: false, length: 50 })
   email: string;
 
-  @Column({ type: 'varchar', nullable: true, length: 15 })
+  @Column({ type: 'varchar', nullable: false, length: 15 })
   phone: string;
 
   @Column({
@@ -51,7 +51,8 @@ export class User {
     | 'maintenance_manager'
     | 'tenant'
     | 'technician'
-    | 'vendor';
+    | 'vendor'
+    | null;
 
   @Column({
     type: 'enum',

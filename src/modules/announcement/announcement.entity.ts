@@ -18,7 +18,7 @@ export class Announcement {
   @ManyToOne(() => Company, { nullable: false })
   company: Company;
 
-  @ManyToOne(() => Building)
+  @ManyToOne(() => Building, { nullable: false })
   building: Building;
 
   @ManyToMany(() => Unit)

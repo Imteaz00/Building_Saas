@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { User } from 'src/modules/user/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('notification_preference')
 export class NotificationPreference {
@@ -29,7 +29,7 @@ export class NotificationPreference {
   enabled: boolean;
 
   @ManyToOne(() => User, { nullable: false })
-  OverriddenBy: User;
+  overriddenBy: User;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

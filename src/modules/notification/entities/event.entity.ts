@@ -24,11 +24,11 @@ export class NotificationEvent {
   @Column({ name: 'target_id' })
   targetId: string;
 
-  @Column({ name: 'raised_by   ' })
+  @Column({ name: 'raised_by' })
   raisedBy: string;
 
   @Column({ type: 'json', nullable: false })
-  payload: string;
+  payload: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'raised_at' })
   raisedAt: Date;

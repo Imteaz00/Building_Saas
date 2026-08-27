@@ -22,7 +22,7 @@ export class Building {
   @Column({ type: 'varchar', nullable: false })
   name: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: false })
   address: string;
 
   @Column({ name: 'building_type', type: 'varchar', nullable: true })
