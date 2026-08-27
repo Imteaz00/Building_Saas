@@ -1,5 +1,3 @@
-import { Company } from 'src/modules/company/company.entity';
-import { User } from 'src/modules/user/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -10,6 +8,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { Company } from 'src/modules/company/company.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Entity('notification_template')
 @Index(['company', 'eventKey', 'channel'], {

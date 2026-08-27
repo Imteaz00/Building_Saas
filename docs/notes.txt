@@ -44,3 +44,7 @@ All the notes while I build the backend will be here. Its to probably better to 
 - document and document link entity
 - building, unit and default charge entity
 - announcement entity
+- verification and session entity
+- verification uuid is considered the token
+- add bycrypt and password hashing
+- add user and add company

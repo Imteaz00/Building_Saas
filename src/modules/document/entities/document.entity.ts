@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 import { Company } from '../../company/company.entity';
-import { User } from '../../user/user.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('document')
 @Index(['id', 'company'], { unique: true })

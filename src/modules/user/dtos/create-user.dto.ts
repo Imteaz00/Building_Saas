@@ -14,6 +14,7 @@ export class CreateUserDto {
   companyId: string;
 
   @IsUUID()
+  @IsOptional()
   tenantId?: string;
 
   @IsNotEmpty()
@@ -29,7 +30,21 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(15)
+  @MinLength(11)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  role?:
+    | 'admin'
+    | 'building_manager'
+    | 'accountant'
+    | 'maintenance_manager'
+    | 'tenant'
+    | 'technician'
+    | 'vendor';
+
+  //state: needs mandatory activation
 
   @IsNotEmpty()
   @IsString()

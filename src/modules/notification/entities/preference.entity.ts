@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { User } from 'src/modules/user/user.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Entity('notification_preference')
 export class NotificationPreference {

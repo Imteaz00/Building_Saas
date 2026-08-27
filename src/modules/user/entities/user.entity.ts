@@ -8,7 +8,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Company } from '../company/company.entity';
+
+import { Company } from '../../company/company.entity';
 
 @Entity()
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
@@ -30,7 +31,27 @@ export class User {
   @Column({ type: 'varchar', nullable: true, length: 15 })
   phone: string;
 
-  //   role_enum
+  @Column({
+    type: 'enum',
+    enum: [
+      'admin',
+      'building_manager',
+      'accountant',
+      'maintenance_manager',
+      'tenant',
+      'technician',
+      'vendor',
+    ],
+    nullable: true,
+  })
+  role:
+    | 'admin'
+    | 'building_manager'
+    | 'accountant'
+    | 'maintenance_manager'
+    | 'tenant'
+    | 'technician'
+    | 'vendor';
 
   @Column({
     type: 'enum',
@@ -65,10 +86,9 @@ export class User {
   @Column({
     name: 'last_sign_in_at',
     type: 'timestamp',
-    nullable: false,
-    default: () => 'CURRENT_TIMESTAMP',
+    nullable: true,
   })
-  lastSignInAt: Date;
+  lastSignInAt: Date | null;
 
   @Column({ name: 'deactivated_at', type: 'timestamp', nullable: true })
   deactivatedAt: Date | null;
@@ -81,4 +101,11 @@ export class User {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date | null;
+
+  //   @BeforeInsert()
+  //   @BeforeUpdate()
+  //   validateTenantId() {
+  //     if (this.role === 'tenant' && !this.tenantId) {
+  //       throw new Error('Tenant users must have a tenantId');
+  //     }
 }

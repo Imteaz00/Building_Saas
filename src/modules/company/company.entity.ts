@@ -11,7 +11,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../user/user.entity';
+
+import { User } from '../user/entities/user.entity';
 import { Document } from '../document/entities/document.entity';
 
 @Entity()
@@ -53,7 +54,7 @@ export class Company {
   @OneToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn([
     { name: 'logo_id', referencedColumnName: 'id' },
-    { name: 'id', referencedColumnName: 'companyId' },
+    { name: 'id', referencedColumnName: 'company' },
   ])
   logo: Document | null;
 

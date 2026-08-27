@@ -23,7 +23,7 @@ export class Unit {
   @ManyToOne(() => Building, { nullable: false })
   @JoinColumn([
     { name: 'building_id', referencedColumnName: 'id' },
-    { name: 'company_id', referencedColumnName: 'id' },
+    { name: 'company_id', referencedColumnName: 'company' },
   ])
   building: Building;
 

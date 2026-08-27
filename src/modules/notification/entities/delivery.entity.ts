@@ -10,7 +10,7 @@ import {
 
 import { NotificationEvent } from './event.entity';
 import { NotificationTemplate } from './template.entity';
-import { User } from 'src/modules/user/user.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Entity('notification_delivery')
 @Index(['event', 'recipient', 'channel'], { unique: true })
