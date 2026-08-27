@@ -32,3 +32,19 @@ All the notes while I build the backend will be here. Its to probably better to 
 25 aug
 - cross-env setup
 - env validation with joi
+- swagger initial setup
+- camelCasing for entity in nest, for database snake_case remains
+- role entity
+- audit-log entity
+
+26aug
+- notification template entity
+- versioning omited for now
+- notification event entity
+- document and document link entity
+- building, unit and default charge entity
+- announcement entity
+- verification and session entity
+- verification uuid is considered the token
+- add bycrypt and password hashing
+- add user and add company

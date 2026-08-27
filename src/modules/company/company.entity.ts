@@ -4,24 +4,34 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../user/user.entity';
+
+import { User } from '../user/entities/user.entity';
+import { Document } from '../document/entities/document.entity';
 
 @Entity()
 @Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
 @Index(['phone'], { unique: true, where: 'deleted_at IS NULL' })
 export class Company {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 100 })
-  legal_name: string;
+  @Column({ name: 'legal_name', type: 'varchar', nullable: false, length: 50 })
+  legalName: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 100 })
-  trading_name: string;
+  @Column({
+    name: 'trading_name',
+    type: 'varchar',
+    nullable: false,
+    length: 100,
+  })
+  tradingName: string;
 
   @Column({ type: 'text', nullable: false })
   address: string;
@@ -32,30 +42,47 @@ export class Company {
   @Column({ type: 'varchar', nullable: false, length: 15 })
   phone: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 20 })
+  @Column({
+    name: 'tax_registration_id',
+    type: 'varchar',
+    nullable: false,
+    length: 20,
+  })
   // @MaxLength(20) need to know the exact requirements
-  tax_registration_id: string;
+  taxRegistrationId: string;
 
-  //   logo
+  @OneToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn([{ name: 'logo_id', referencedColumnName: 'id' }])
+  logo: Document | null;
 
-  @Column({ type: 'varchar', nullable: false, length: 3 })
-  base_currency: string;
+  @Column({
+    name: 'base_currency',
+    type: 'varchar',
+    nullable: false,
+    length: 3,
+  })
+  baseCurrency: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 5 })
-  default_locale: string;
+  @Column({
+    name: 'default_locale',
+    type: 'varchar',
+    nullable: false,
+    length: 5,
+  })
+  defaultLocale: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 50 })
-  time_zone: string;
+  @Column({ name: 'time_zone', type: 'varchar', nullable: false, length: 50 })
+  timeZone: string;
 
   @OneToMany(() => User, (user) => user.company)
   users: User[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date | null;
 }
