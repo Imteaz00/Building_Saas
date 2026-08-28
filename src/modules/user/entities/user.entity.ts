@@ -68,7 +68,7 @@ export class User {
     nullable: true,
     length: 60,
   })
-  passwordHash: string;
+  passwordHash: string | null;
 
   @Column({
     name: 'password_updated_at',

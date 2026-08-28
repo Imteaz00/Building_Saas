@@ -15,6 +15,7 @@ import {
   MoreThan,
   IsNull,
 } from 'typeorm';
+import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -23,6 +24,7 @@ import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
 import userConfig from './config/user.config';
 import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
+import { CreateUserResponseDto } from 'src/modules/user/dtos/create-user-response.dto';
 
 @Injectable()
 export class UserService {
@@ -40,9 +42,7 @@ export class UserService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async createUser(
-    userDto: CreateUserDto,
-  ): Promise<{ newUser: User; token: string }> {
+  async createUser(userDto: CreateUserDto): Promise<CreateUserResponseDto> {
     try {
       const existingUser = await this.userRepository.findOne({
         where: { email: userDto.email },
@@ -54,9 +54,6 @@ export class UserService {
       const company = await this.companyService.getCompanyById(
         userDto.companyId,
       );
-      if (!company) {
-        throw new NotFoundException('Company not found');
-      }
 
       const { newUser, token } = await this.dataSource.transaction(
         async (manager) => {
@@ -78,7 +75,12 @@ export class UserService {
           return { newUser, token };
         },
       );
-      return { newUser, token };
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        phone: newUser.phone,
+        token,
+      };
     } catch (error) {
       throw error;
     }
@@ -93,7 +95,7 @@ export class UserService {
       ? manager.getRepository(Verification)
       : this.verificationRepository;
 
-    const token = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const token = randomBytes(32).toString('hex');
     try {
       const tokenHash = await this.bcryptProvider.hashData(token);
       const verification = repo.create({
