@@ -3,15 +3,20 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class BcryptProvider {
-  async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, salt);
+  async hashData(data: string): Promise<string> {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      return await bcrypt.hash(data, salt);
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async comparePasswords(
-    password: string,
-    passwordHash: string,
-  ): Promise<boolean> {
-    return await bcrypt.compare(password, passwordHash);
+  async compareData(data: string, dataHash: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(data, dataHash);
+    } catch (error) {
+      throw error;
+    }
   }
 }

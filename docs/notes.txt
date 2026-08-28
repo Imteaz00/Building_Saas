@@ -48,3 +48,12 @@ All the notes while I build the backend will be here. Its to probably better to 
 - verification uuid is considered the token
 - add bycrypt and password hashing
 - add user and add company
+
+28 aug
+- get company by id, get company ids
+- separate user config
+- token expiry date on config file
+- create verification token
+- transaction(create verification token + create user)
+- verify token
+- user not active until password set, even if token is verified. token verification only gives access to set pass

@@ -20,7 +20,8 @@ export class Verification {
   @Column({ type: 'enum', enum: ['activation', 'reset'], nullable: false })
   purpose: 'activation' | 'reset';
 
-  //token_hash
+  @Column({ name: 'token_hash', type: 'varchar', nullable: false, length: 255 })
+  tokenHash: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

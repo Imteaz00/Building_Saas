@@ -1,41 +1,181 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import type { ConfigType } from '@nestjs/config';
 
-import { Repository } from 'typeorm';
+import {
+  Repository,
+  DataSource,
+  EntityManager,
+  MoreThan,
+  IsNull,
+} from 'typeorm';
+import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { BcryptProvider } from './provider/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
+import { Verification } from './entities/verification.entity';
+import userConfig from './config/user.config';
+import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
+import { CreateUserResponseDto } from 'src/modules/user/dtos/create-user-response.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Verification)
+    private verificationRepository: Repository<Verification>,
+
+    @InjectDataSource() private dataSource: DataSource,
+
+    @Inject(userConfig.KEY)
+    private readonly config: ConfigType<typeof userConfig>,
+
     private readonly bcryptProvider: BcryptProvider,
     private readonly companyService: CompanyService,
   ) {}
 
-  async createUser(userDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userRepository.findOne({
-      where: { email: userDto.email },
-    });
-    if (existingUser) {
-      throw new Error('User with this email already exists');
+  async createUser(userDto: CreateUserDto): Promise<CreateUserResponseDto> {
+    try {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: userDto.email },
+      });
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+
+      const company = await this.companyService.getCompanyById(
+        userDto.companyId,
+      );
+
+      const { newUser, token } = await this.dataSource.transaction(
+        async (manager) => {
+          let newUser = manager.create(User, {
+            ...userDto,
+            company,
+            state: 'pending-activation',
+          });
+          newUser = await manager.save(newUser);
+
+          if (!newUser) {
+            throw new Error('Failed to create user');
+          }
+          const { verification, token } = await this.createVerificationToken(
+            newUser.id,
+            'activation',
+            manager,
+          );
+          return { newUser, token };
+        },
+      );
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        phone: newUser.phone,
+        token,
+      };
+    } catch (error) {
+      throw error;
     }
-
-    const passwordHash = await this.bcryptProvider.hashPassword(
-      userDto.password,
-    );
-
-    const company = await this.companyService.getCompanyById(userDto.companyId);
-
-    let newUser = this.userRepository.create({
-      ...userDto,
-      passwordHash,
-      company,
-    });
-    newUser = await this.userRepository.save(newUser);
-    return newUser;
   }
+
+  async createVerificationToken(
+    userId: string,
+    purpose: 'activation' | 'reset',
+    manager?: EntityManager,
+  ): Promise<{ verification: Verification; token: string }> {
+    const repo = manager
+      ? manager.getRepository(Verification)
+      : this.verificationRepository;
+
+    const token = randomBytes(32).toString('hex');
+    try {
+      const tokenHash = await this.bcryptProvider.hashData(token);
+      const verification = repo.create({
+        user: { id: userId },
+        purpose,
+        tokenHash,
+        expiresAt: new Date(
+          Date.now() + this.config.verificationTokenExpiry * 60 * 1000,
+        ),
+      });
+      const savedVerification = await repo.save(verification);
+      if (!savedVerification) {
+        throw new Error('Failed to create verification token');
+      }
+      return { verification: savedVerification, token };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async verifyToken(verifyTokenDto: VerifyTokenDto): Promise<boolean> {
+    const { token, userId } = verifyTokenDto;
+    try {
+      const verification = await this.verificationRepository.findOne({
+        where: { user: { id: userId } },
+        order: { createdAt: 'DESC' },
+      });
+      if (!verification) {
+        throw new NotFoundException('Verification token not found');
+      }
+
+      if (verification.expiresAt < new Date()) {
+        throw new BadRequestException('Verification token has expired');
+      }
+      if (verification.usedAt) {
+        throw new BadRequestException('Verification token has expired');
+      }
+
+      const isMatch = await this.bcryptProvider.compareData(
+        token,
+        verification.tokenHash,
+      );
+      if (!isMatch) {
+        return false;
+      }
+
+      const result = await this.verificationRepository.update(
+        {
+          id: verification.id,
+          usedAt: IsNull(),
+          expiresAt: MoreThan(new Date()),
+        },
+        {
+          usedAt: new Date(),
+        },
+      );
+
+      return result.affected === 1;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //   async updatePassword(userId: string, password: string) {
+  //     try {
+  //       const user = await this.userRepository.findOne({ where: { id: userId } });
+  //       if (!user) {
+  //         throw new NotFoundException('User not found');
+  //       }
+
+  //       const verification = await this.verificationRepository.findOne({
+  //         where: { user: { id: userId } },
+  //         order: { createdAt: 'DESC' },
+  //       });
+
+  //       const hashedPassword = await this.bcryptProvider.hashData(password);
+  //       user.password = hashedPassword;
+  //       return await this.userRepository.save(user);
+  //     } catch (error) {
+  //       throw error;
+  //     }
+  //   }
 }

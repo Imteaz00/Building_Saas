@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -12,25 +16,55 @@ export class CompanyService {
   ) {}
 
   async createCompany(companyDto: CreateCompanyDto): Promise<Company> {
-    const existingCompany = await this.companyRepository.findOne({
-      where: [{ email: companyDto.email }, { phone: companyDto.phone }],
-    });
+    try {
+      const existingCompany = await this.companyRepository.findOne({
+        where: [{ email: companyDto.email }, { phone: companyDto.phone }],
+      });
+      if (existingCompany) {
+        throw new ConflictException(
+          'Company with this email or phone already exists',
+        );
+      }
 
-    if (existingCompany) {
-      throw new Error('Company with this email or phone already exists');
+      //handle logo
+
+      let newCompany = this.companyRepository.create(companyDto);
+      newCompany = await this.companyRepository.save(newCompany);
+      if (!newCompany) {
+        throw new Error('Failed to create company');
+      }
+      return newCompany;
+    } catch (error) {
+      throw error;
     }
-
-    //handle logo
-
-    const newCompany = this.companyRepository.create(companyDto);
-    return this.companyRepository.save(newCompany);
   }
 
   async getCompanyById(id: string): Promise<Company> {
-    const company = await this.companyRepository.findOne({ where: { id } });
-    if (!company) {
-      throw new Error('Company not found');
+    try {
+      const company = await this.companyRepository.findOne({ where: { id } });
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+      return company;
+    } catch (error) {
+      throw error;
     }
-    return company;
+  }
+
+  async getCompanyIds(): Promise<
+    { id: string; legalName: string; tradingName: string }[]
+  > {
+    try {
+      const companies = await this.companyRepository.find({
+        select: { id: true, legalName: true, tradingName: true },
+      });
+      return companies.map((company) => ({
+        id: company.id,
+        legalName: company.legalName,
+        tradingName: company.tradingName,
+      }));
+    } catch (error) {
+      throw error;
+    }
   }
 }
