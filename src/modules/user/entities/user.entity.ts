@@ -28,8 +28,8 @@ export class User {
   @Column({ type: 'varchar', nullable: false, length: 50 })
   email: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 15 })
-  phone: string;
+  @Column({ type: 'varchar', nullable: true, length: 15 })
+  phone: string | null;
 
   @Column({
     type: 'enum',
@@ -62,16 +62,21 @@ export class User {
   })
   state: 'pending-activation' | 'active' | 'suspended' | 'deactivated';
 
-  @Column({ name: 'password_hash', type: 'varchar', nullable: false })
+  @Column({
+    name: 'password_hash',
+    type: 'varchar',
+    nullable: true,
+    length: 60,
+  })
   passwordHash: string;
 
   @Column({
     name: 'password_updated_at',
     type: 'timestamp',
-    nullable: false,
+    nullable: true,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  passwordUpdatedAt: Date;
+  passwordUpdatedAt: Date | null;
 
   @Column({
     name: 'failed_attempt_count',

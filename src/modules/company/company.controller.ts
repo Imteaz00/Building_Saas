@@ -19,4 +19,12 @@ export class CompanyController {
   async getCompanyById(@Param('id') id: string) {
     return await this.companyService.getCompanyById(id);
   }
+
+  @Get('/get-all-ids')
+  @ApiOperation({
+    summary: 'Get IDs of all companies with legal names and trading names',
+  })
+  async getCompaniesIds() {
+    return await this.companyService.getCompanyIds();
+  }
 }

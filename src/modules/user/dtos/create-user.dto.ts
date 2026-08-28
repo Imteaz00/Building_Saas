@@ -31,24 +31,5 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(15)
   @MinLength(11)
-  phone?: string;
-
-  @IsOptional()
-  @IsString()
-  role?:
-    | 'admin'
-    | 'building_manager'
-    | 'accountant'
-    | 'maintenance_manager'
-    | 'tenant'
-    | 'technician'
-    | 'vendor';
-
-  //state: needs mandatory activation
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(50)
-  @MinLength(8)
-  password: string;
+  phone?: string | null;
 }
