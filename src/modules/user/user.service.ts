@@ -8,7 +8,13 @@ import {
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import type { ConfigType } from '@nestjs/config';
 
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import {
+  Repository,
+  DataSource,
+  EntityManager,
+  MoreThan,
+  IsNull,
+} from 'typeorm';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -131,11 +137,21 @@ export class UserService {
         verification.tokenHash,
       );
       if (!isMatch) {
-        throw new BadRequestException('Invalid verification token');
+        return false;
       }
-      verification.usedAt = new Date();
-      await this.verificationRepository.save(verification);
-      return true;
+
+      const result = await this.verificationRepository.update(
+        {
+          id: verification.id,
+          usedAt: IsNull(),
+          expiresAt: MoreThan(new Date()),
+        },
+        {
+          usedAt: new Date(),
+        },
+      );
+
+      return result.affected === 1;
     } catch (error) {
       throw error;
     }

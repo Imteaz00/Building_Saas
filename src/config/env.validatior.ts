@@ -5,4 +5,5 @@ export default Joi.object({
   PORT: Joi.number().default(3000).port(),
   DATABASE_URL: Joi.string().required(),
   SYNCHRONIZE: Joi.boolean().default(false),
+  VERIFICATION_TOKEN_EXPIRY: Joi.number().default(15),
 });
