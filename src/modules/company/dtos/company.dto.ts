@@ -10,7 +10,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class CreateCompanyDto {
+export class CompanyDto {
   @IsString()
   @MaxLength(50)
   @IsNotEmpty()

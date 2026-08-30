@@ -7,7 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Company } from './company.entity';
-import { CreateCompanyDto } from './dtos/create-company.dto';
+import { CompanyDto } from './dtos/company.dto';
+import { CompanyResponseDto } from './dtos/company-response.dto';
 
 @Injectable()
 export class CompanyService {
@@ -15,7 +16,7 @@ export class CompanyService {
     @InjectRepository(Company) private companyRepository: Repository<Company>,
   ) {}
 
-  async createCompany(companyDto: CreateCompanyDto): Promise<Company> {
+  async createCompany(companyDto: CompanyDto): Promise<CompanyResponseDto> {
     try {
       const existingCompany = await this.companyRepository.findOne({
         where: [{ email: companyDto.email }, { phone: companyDto.phone }],
@@ -33,19 +34,33 @@ export class CompanyService {
       if (!newCompany) {
         throw new Error('Failed to create company');
       }
-      return newCompany;
+      return {
+        id: newCompany.id,
+        legalName: newCompany.legalName,
+        tradingName: newCompany.tradingName,
+        email: newCompany.email,
+        phone: newCompany.phone,
+        // logo: newCompany?.logo,
+      };
     } catch (error) {
       throw error;
     }
   }
 
-  async getCompanyById(id: string): Promise<Company> {
+  async getCompanyById(id: string): Promise<CompanyResponseDto> {
     try {
       const company = await this.companyRepository.findOne({ where: { id } });
       if (!company) {
         throw new NotFoundException('Company not found');
       }
-      return company;
+      return {
+        id: company.id,
+        legalName: company.legalName,
+        tradingName: company.tradingName,
+        email: company.email,
+        phone: company.phone,
+        // logo: company?.logo,
+      };
     } catch (error) {
       throw error;
     }

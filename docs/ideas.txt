@@ -9,7 +9,8 @@ Here will try to note things I would like to implement as a checklist
 - might need to downgrade pg for warnings
 - need to know event key
 - need to add manager etc for building
-- left assets for future
+- left assets module for future
+- dont need redis for now, should monitor usage to determine if and when it will be needed
 
 
 

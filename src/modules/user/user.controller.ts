@@ -2,12 +2,11 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 
 import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { CreateUserDto } from './dtos/create-user.dto';
-import { UpdateUserDto } from './dtos/update-user.dto';
+import { UserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
 import { VerifyTokenDto } from './dtos/verify-token.dto';
-import { CreateUserResponseDto } from './dtos/create-user-response.dto';
+import { UserResponseDto } from './dtos/user-response.dto';
 
 @Controller('user')
 export class UserController {
@@ -15,9 +14,8 @@ export class UserController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new user with a verification token' })
-  async createUser(
-    @Body() userDto: CreateUserDto,
-  ): Promise<CreateUserResponseDto> {
+  @ApiCreatedResponse({ type: UserResponseDto })
+  async createUser(@Body() userDto: UserDto): Promise<UserResponseDto> {
     return await this.userService.createUser(userDto);
   }
 

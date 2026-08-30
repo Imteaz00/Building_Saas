@@ -57,3 +57,10 @@ All the notes while I build the backend will be here. Its to probably better to 
 - transaction(create verification token + create user)
 - verify token
 - user not active until password set, even if token is verified. token verification only gives access to set pass
+
+30aug
+- response dtos
+- create a generic response dto that can be used for both create and get
+- get notification template by id, filter
+- add validatoin pipes for uuids
+- update template
