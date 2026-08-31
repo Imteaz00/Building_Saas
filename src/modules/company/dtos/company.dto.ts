@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import {
   IsEmail,
   IsISO4217CurrencyCode,
@@ -10,7 +11,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class CreateCompanyDto {
+export class CompanyDto {
   @IsString()
   @MaxLength(50)
   @IsNotEmpty()
@@ -57,3 +58,5 @@ export class CreateCompanyDto {
   @IsNotEmpty()
   timeZone: string;
 }
+
+export class UpdateCompanyDto extends PartialType(CompanyDto) {}

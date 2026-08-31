@@ -18,13 +18,13 @@ import {
 import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { UserDto } from './dtos/user.dto';
 import { BcryptProvider } from './provider/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
 import userConfig from './config/user.config';
 import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
-import { CreateUserResponseDto } from 'src/modules/user/dtos/create-user-response.dto';
+import { UserResponseDto } from 'src/modules/user/dtos/user-response.dto';
 
 @Injectable()
 export class UserService {
@@ -42,7 +42,7 @@ export class UserService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async createUser(userDto: CreateUserDto): Promise<CreateUserResponseDto> {
+  async createUser(userDto: UserDto): Promise<UserResponseDto> {
     try {
       const existingUser = await this.userRepository.findOne({
         where: { email: userDto.email },
@@ -59,7 +59,7 @@ export class UserService {
         async (manager) => {
           let newUser = manager.create(User, {
             ...userDto,
-            company,
+            company: { id: company.id },
             state: 'pending-activation',
           });
           newUser = await manager.save(newUser);

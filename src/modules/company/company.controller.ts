@@ -1,8 +1,16 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
-import { CreateCompanyDto } from './dtos/create-company.dto';
+import { CompanyDto } from './dtos/company.dto';
+import { CompanyResponseDto } from './dtos/company-response.dto';
 
 @Controller('company')
 export class CompanyController {
@@ -10,13 +18,17 @@ export class CompanyController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new company' })
-  async createCompany(@Body() companyDto: CreateCompanyDto) {
+  async createCompany(
+    @Body() companyDto: CompanyDto,
+  ): Promise<CompanyResponseDto> {
     return this.companyService.createCompany(companyDto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a company by ID' })
-  async getCompanyById(@Param('id') id: string) {
+  async getCompanyById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<CompanyResponseDto> {
     return await this.companyService.getCompanyById(id);
   }
 
@@ -24,7 +36,9 @@ export class CompanyController {
   @ApiOperation({
     summary: 'Get IDs of all companies with legal names and trading names',
   })
-  async getCompaniesIds() {
+  async getCompaniesIds(): Promise<
+    { id: string; legalName: string; tradingName: string }[]
+  > {
     return await this.companyService.getCompanyIds();
   }
 }
