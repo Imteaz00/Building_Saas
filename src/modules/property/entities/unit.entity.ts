@@ -3,17 +3,15 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { Building } from './building.entity';
-import { Company } from 'src/modules/company/company.entity';
 
 @Entity('unit')
-@Index(['id', 'unitNumber'], { unique: true })
+@Index(['building', 'unitNumber'], { unique: true })
 export class Unit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -34,11 +32,11 @@ export class Unit {
   })
   unitType: 'apartment' | 'commercial' | 'parking' | 'common_area';
 
-  @Column({ type: 'int', nullable: true })
-  floor: number | null;
+  @Column({ type: 'int', nullable: false })
+  floor: number;
 
-  @Column({ type: 'int', nullable: true })
-  size: number | null;
+  @Column({ type: 'int', nullable: false })
+  size: number;
 
   @Column({
     name: 'size_unit',
@@ -61,6 +59,7 @@ export class Unit {
     nullable: false,
   })
   occupancyStatus: 'occupied' | 'vacant' | 'reserved' | 'unavailable';
+
   @Column({ name: 'unavailable_reason', type: 'varchar', nullable: true })
   unavailableReason: string;
 

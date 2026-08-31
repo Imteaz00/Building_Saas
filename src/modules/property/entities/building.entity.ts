@@ -19,7 +19,7 @@ export class Building {
   @ManyToOne(() => Company, { nullable: false })
   company: Company;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   name: string;
 
   @Column({ type: 'text', nullable: false })
@@ -28,7 +28,7 @@ export class Building {
   @Column({ name: 'building_type', type: 'varchar', nullable: true })
   buildingType: string;
 
-  @Column({ name: 'year_built', type: 'int', nullable: true })
+  @Column({ name: 'year_built', type: 'int', nullable: false })
   yearBuilt: number;
 
   @Column({ name: 'floor_count', type: 'int', nullable: true })
