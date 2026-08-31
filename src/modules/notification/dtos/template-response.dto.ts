@@ -13,7 +13,7 @@ export class NotificationTemplateResponseDto {
 
   @ApiProperty({ description: "The template's subject" })
   @IsOptional()
-  subject: string;
+  subject?: string | null;
 
   @ApiProperty({ description: "The template's content" })
   body: string;

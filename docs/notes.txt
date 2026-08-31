@@ -62,5 +62,5 @@ All the notes while I build the backend will be here. Its to probably better to 
 - response dtos
 - create a generic response dto that can be used for both create and get
 - get notification template by id, filter
-- add validatoin pipes for uuids
+- add validation pipes for uuids
 - update template

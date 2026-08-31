@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { NotificationTemplate } from './entities/template.entity';
-import { NotificationTemplateQueryParamsDto } from './dtos/tamplate-query.dto';
+import { NotificationTemplateQueryParamsDto } from './dtos/template-query.dto';
 import { NotificationTemplateResponseDto } from './dtos/template-response.dto';
-import { NotificationTemplateDto } from './dtos/template.dto';
+import { UpdateNotificationTemplateDto } from './dtos/template.dto';
 
 @Injectable()
 export class NotificationService {
@@ -17,12 +17,11 @@ export class NotificationService {
   async getAllTemplates(
     query: NotificationTemplateQueryParamsDto,
   ): Promise<NotificationTemplateResponseDto[]> {
-    const templates = await this.templateRepository.find({
-      where: {
-        channel: query.channel,
-        eventKey: query.eventKey,
-      },
-    });
+    const where: any = {};
+    if (query.channel) where.channel = query.channel;
+    if (query.eventKey) where.eventKey = query.eventKey;
+
+    const templates = await this.templateRepository.find({ where });
 
     return templates.map((template) => ({
       id: template.id,
@@ -55,7 +54,7 @@ export class NotificationService {
 
   async updateTemplate(
     templateId: string,
-    updateData: Partial<NotificationTemplateDto>,
+    updateData: UpdateNotificationTemplateDto,
   ): Promise<NotificationTemplateResponseDto> {
     const template = await this.templateRepository.findOne({
       where: { id: templateId },

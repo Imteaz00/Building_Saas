@@ -11,7 +11,7 @@ Here will try to note things I would like to implement as a checklist
 - need to add manager etc for building
 - left assets module for future
 - dont need redis for now, should monitor usage to determine if and when it will be needed
-
+- add company to template
 
 
 Frontend:

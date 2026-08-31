@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import {
   IsEmail,
   IsISO4217CurrencyCode,
@@ -57,3 +58,5 @@ export class CompanyDto {
   @IsNotEmpty()
   timeZone: string;
 }
+
+export class UpdateCompanyDto extends PartialType(CompanyDto) {}

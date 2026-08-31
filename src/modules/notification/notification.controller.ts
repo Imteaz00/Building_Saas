@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 
 import { NotificationService } from './notification.service';
-import { NotificationTemplateQueryParamsDto } from './dtos/tamplate-query.dto';
+import { NotificationTemplateQueryParamsDto } from './dtos/template-query.dto';
 import { NotificationTemplateResponseDto } from './dtos/template-response.dto';
-import { NotificationTemplateDto } from './dtos/template.dto';
+import { UpdateNotificationTemplateDto } from './dtos/template.dto';
 
 @Controller('notification')
 export class NotificationController {
@@ -34,7 +34,7 @@ export class NotificationController {
   @Patch('template/:templateId')
   async updateTemplate(
     @Param('templateId', ParseUUIDPipe) templateId: string,
-    @Body() updateTemplateDto: Partial<NotificationTemplateDto>,
+    @Body() updateTemplateDto: UpdateNotificationTemplateDto,
   ): Promise<NotificationTemplateResponseDto> {
     return await this.notificationService.updateTemplate(
       templateId,

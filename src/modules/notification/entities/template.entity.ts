@@ -30,8 +30,8 @@ export class NotificationTemplate {
   @Column({ type: 'enum', enum: ['email', 'sms', 'in-app'], nullable: false })
   channel: 'email' | 'sms' | 'in-app';
 
-  @Column({ type: 'varchar', length: 100 })
-  subject: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  subject?: string | null;
 
   @Column({ type: 'text', nullable: false })
   body: string;
