@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 import { Company } from '../../company/company.entity';
 
@@ -68,6 +69,7 @@ export class User {
     nullable: true,
     length: 60,
   })
+  @Exclude()
   passwordHash: string | null;
 
   @Column({

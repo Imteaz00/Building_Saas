@@ -15,5 +15,5 @@ Here will try to note things I would like to implement as a checklist
 
 
 Frontend:
-- Below bad should stay
+- Below bar should stay
 - add dark mode
