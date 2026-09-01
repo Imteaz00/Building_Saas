@@ -27,9 +27,11 @@ export class PropertyService {
       if (!company) {
         throw new NotFoundException('Company not found');
       }
-      building.companyId = company.id;
 
-      const newBuilding = this.buildingRepository.create(building);
+      const newBuilding = this.buildingRepository.create({
+        ...building,
+        company: { id: company.id },
+      });
       const savedBuilding = await this.buildingRepository.save(newBuilding);
       if (!savedBuilding) {
         throw new Error('Building could not be saved');
@@ -59,9 +61,11 @@ export class PropertyService {
       if (!building) {
         throw new NotFoundException('Building not found');
       }
-      unit.buildingId = building.id;
 
-      const newUnit = this.unitRepository.create(unit);
+      const newUnit = this.unitRepository.create({
+        ...unit,
+        building: { id: building.id },
+      });
       const savedUnit = await this.unitRepository.save(newUnit);
       if (!savedUnit) {
         throw new Error('Unit could not be saved');

@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDate,
+  IsDateString,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -20,7 +20,7 @@ export class UnitDto {
   unitNumber: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsIn(['apartment', 'commercial', 'parking', 'common_area'])
   unitType: 'apartment' | 'commercial' | 'parking' | 'common_area';
 
   @IsNotEmpty()
@@ -52,7 +52,7 @@ export class UnitDto {
   unavailableReason?: string;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   expectedReturnDate?: Date;
 }
 
