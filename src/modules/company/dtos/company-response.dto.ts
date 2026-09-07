@@ -13,4 +13,6 @@ export class CompanyResponseDto {
   phone: string;
   @ApiProperty({ description: 'The logo of the company', required: false })
   logo?: string | null;
+  @ApiProperty({ description: 'The slug of the company' })
+  slug: string;
 }

@@ -29,9 +29,12 @@ export class Company {
     name: 'trading_name',
     type: 'varchar',
     nullable: false,
-    length: 100,
+    length: 50,
   })
   tradingName: string;
+
+  @Column({ type: 'varchar', nullable: false, length: 50 })
+  slug: string;
 
   @Column({ type: 'text', nullable: false })
   address: string;

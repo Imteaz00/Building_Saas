@@ -24,6 +24,11 @@ export class UserDto {
   name: string;
 
   @IsNotEmpty()
+  @IsString()
+  @MaxLength(50)
+  username: string;
+
+  @IsNotEmpty()
   @IsEmail()
   @MaxLength(50)
   email: string;
@@ -33,6 +38,11 @@ export class UserDto {
   @MaxLength(15)
   @MinLength(11)
   phone?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string | null;
 }
 
 export class UpdateUserDto extends PartialType(UserDto) {}

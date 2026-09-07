@@ -1,12 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
-import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 
 import { UserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
-import { User } from './entities/user.entity';
 import { VerifyTokenDto } from './dtos/verify-token.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
+import { AuthorizeGuard } from 'src/guards/authorize.guard';
 
 @Controller('user')
 export class UserController {
@@ -14,8 +26,9 @@ export class UserController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new user with a verification token' })
-  @ApiCreatedResponse({ type: UserResponseDto })
-  async createUser(@Body() userDto: UserDto): Promise<UserResponseDto> {
+  async createUser(
+    @Body() userDto: UserDto,
+  ): Promise<{ user: UserResponseDto; token: string }> {
     return await this.userService.createUser(userDto);
   }
 
@@ -23,6 +36,23 @@ export class UserController {
   @ApiOperation({ summary: 'Verify a user token' })
   async verifyToken(@Body() verifyTokenDto: VerifyTokenDto): Promise<boolean> {
     return await this.userService.verifyToken(verifyTokenDto);
+  }
+
+  @ApiBearerAuth('Authorization')
+  @UseGuards(AuthorizeGuard)
+  @Get('by-id/:userId')
+  @ApiOperation({ summary: "Get a user's details by ID" })
+  async getUserById(@Param('userId') userId: string): Promise<UserResponseDto> {
+    return await this.userService.getUserById(userId);
+  }
+
+  @Get('validate-username/:username')
+  @ApiOperation({ summary: 'Verify if a username exists' })
+  async validateUsername(
+    @Param('username') username: string,
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.userService.validateUsername(username);
+    return { exists };
   }
 
   //   @Patch('update-password/:userId')

@@ -6,4 +6,6 @@ export default Joi.object({
   DATABASE_URL: Joi.string().required(),
   SYNCHRONIZE: Joi.boolean().required(),
   VERIFICATION_TOKEN_EXPIRY: Joi.number().required(),
+  JWT_SECRET: Joi.string().required(),
+  ACCESS_TOKEN_EXPIRY: Joi.number().required(),
 });

@@ -25,6 +25,11 @@ export class CompanyDto {
   @IsString()
   @MaxLength(50)
   @IsNotEmpty()
+  slug: string;
+
+  @IsString()
+  @MaxLength(50)
+  @IsNotEmpty()
   address: string;
 
   @IsEmail()

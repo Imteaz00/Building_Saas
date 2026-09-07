@@ -12,6 +12,8 @@ Here will try to note things I would like to implement as a checklist
 - left assets module for future
 - dont need redis for now, should monitor usage to determine if and when it will be needed
 - add company to template
+- add issuer and audience to jwt
+- need to remove token from create user
 
 
 Frontend:

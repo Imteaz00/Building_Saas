@@ -41,4 +41,13 @@ export class CompanyController {
   > {
     return await this.companyService.getCompanyIds();
   }
+
+  @Get('/validate-slug/:slug')
+  @ApiOperation({ summary: 'Validate if a company slug exists' })
+  async validateCompanySlug(
+    @Param('slug') slug: string,
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.companyService.validateSlug(slug);
+    return { exists };
+  }
 }

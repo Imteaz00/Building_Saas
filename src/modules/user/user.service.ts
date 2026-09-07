@@ -19,7 +19,7 @@ import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
 import { UserDto } from './dtos/user.dto';
-import { BcryptProvider } from './provider/bcrypt.provider';
+import { BcryptProvider } from './providers/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
 import userConfig from './config/user.config';
@@ -42,23 +42,43 @@ export class UserService {
     private readonly companyService: CompanyService,
   ) {}
 
-  async createUser(userDto: UserDto): Promise<UserResponseDto> {
+  async createUser(
+    userDto: UserDto,
+  ): Promise<{ user: UserResponseDto; token: string }> {
     try {
+      const where: any = [
+        { email: userDto.email },
+        { username: userDto.username },
+      ];
+      if (userDto.phone) {
+        where.push({ phone: userDto.phone });
+      }
       const existingUser = await this.userRepository.findOne({
-        where: { email: userDto.email },
+        where: where,
       });
       if (existingUser) {
-        throw new ConflictException('User with this email already exists');
+        throw new ConflictException(
+          'User with this email or username already exists',
+        );
       }
 
       const company = await this.companyService.getCompanyById(
         userDto.companyId,
       );
 
+      const userCompanySlug = userDto.username.split('@')[1];
+
+      if (!userCompanySlug || userCompanySlug !== company.slug) {
+        throw new BadRequestException('Invalid username');
+      }
+
+      const hashedPassword = 'notSet';
+
       const { newUser, token } = await this.dataSource.transaction(
         async (manager) => {
           let newUser = manager.create(User, {
             ...userDto,
+            passwordHash: hashedPassword,
             company: { id: company.id },
             state: 'pending-activation',
           });
@@ -76,9 +96,12 @@ export class UserService {
         },
       );
       return {
-        id: newUser.id,
-        email: newUser.email,
-        phone: newUser.phone,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          phone: newUser.phone,
+          username: newUser.username,
+        },
         token,
       };
     } catch (error) {
@@ -86,7 +109,7 @@ export class UserService {
     }
   }
 
-  async createVerificationToken(
+  private async createVerificationToken(
     userId: string,
     purpose: 'activation' | 'reset',
     manager?: EntityManager,
@@ -97,7 +120,8 @@ export class UserService {
 
     const token = randomBytes(32).toString('hex');
     try {
-      const tokenHash = await this.bcryptProvider.hashData(token);
+      //   const tokenHash = await this.bcryptProvider.hashData(token);
+      const tokenHash = token;
       const verification = repo.create({
         user: { id: userId },
         purpose,
@@ -142,18 +166,63 @@ export class UserService {
         return false;
       }
 
-      const result = await this.verificationRepository.update(
-        {
-          id: verification.id,
-          usedAt: IsNull(),
-          expiresAt: MoreThan(new Date()),
-        },
-        {
-          usedAt: new Date(),
+      const { result, user } = await this.dataSource.transaction(
+        async (manager) => {
+          const result = await manager.update(
+            Verification,
+            {
+              id: verification.id,
+              usedAt: IsNull(),
+              expiresAt: MoreThan(new Date()),
+            },
+            {
+              usedAt: new Date(),
+            },
+          );
+
+          const user = await manager.update(
+            User,
+            {
+              where: { id: userId },
+            },
+            { state: 'active' },
+          );
+
+          return { result, user };
         },
       );
 
       return result.affected === 1;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getUserById(id: string): Promise<UserResponseDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        username: user.username,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async validateUsername(username: string): Promise<boolean> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { username },
+      });
+      return !user;
     } catch (error) {
       throw error;
     }
