@@ -72,7 +72,7 @@ export class UserService {
         throw new BadRequestException('Invalid username');
       }
 
-      const hashedPassword = 'notSet';
+      const hashedPassword = null;
 
       const { newUser, token } = await this.dataSource.transaction(
         async (manager) => {
@@ -222,7 +222,7 @@ export class UserService {
       const user = await this.userRepository.findOne({
         where: { username },
       });
-      return !user;
+      return !!user;
     } catch (error) {
       throw error;
     }
