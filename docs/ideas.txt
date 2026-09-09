@@ -16,6 +16,7 @@ Here will try to note things I would like to implement as a checklist
 - need to remove token from create user
 - check login with pass set as null //seems solved for now
 - get userid from request
+- validateusername using company name
 
 
 Frontend:

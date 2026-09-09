@@ -1,11 +1,9 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 import { User } from './user.entity';
@@ -34,9 +32,9 @@ export class UserSession {
   sourceIp: string | null;
 
   @Column({
-    name: 'refresh_token_hash',
+    name: 'refresh_token',
     type: 'varchar',
-    length: 32,
+    length: 64,
     nullable: false,
     unique: true,
   })

@@ -8,6 +8,7 @@ export default Joi.object({
   VERIFICATION_TOKEN_EXPIRY: Joi.number().required(),
   JWT_SECRET: Joi.string().required(),
   ACCESS_TOKEN_EXPIRY: Joi.number().required(),
+  REFRESH_TOKEN_EXPIRY: Joi.number().required(),
   EMAIL_HOST: Joi.string().required(),
   EMAIL_PORT: Joi.number().default(2525).port().required(),
   EMAIL_USERNAME: Joi.string().required(),

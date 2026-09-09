@@ -79,7 +79,7 @@ export class UserService {
 
       const passwordHash = userDto.password
         ? await this.bcryptProvider.hashData(userDto.password)
-        : 'notset';
+        : null;
 
       const { newUser, token } = await this.dataSource.transaction(
         async (manager) => {
@@ -248,11 +248,25 @@ export class UserService {
         throw new NotFoundException('User not found');
       }
 
-      if (user.password) {
-        user.password = await this.bcryptProvider.hashData(user.password);
+      if (user.username && user.username !== existingUser.username) {
+        if (await this.validateUsername(user.username)) {
+          throw new ConflictException('Username already exists'); //change after updatiing validateUsername
+        }
+        existingUser.username = user.username;
       }
 
-      const updatedUser = await this.userRepository.save(user);
+      if (user.password) {
+        existingUser.passwordHash = await this.bcryptProvider.hashData(
+          user.password,
+        );
+        existingUser.passwordUpdatedAt = new Date();
+      }
+      const { userId, password, ...updateData } = user;
+      const updatedUser = await this.userRepository.save({
+        ...existingUser,
+        ...updateData,
+      });
+
       if (!updatedUser) {
         throw new Error('Failed to update user');
       }

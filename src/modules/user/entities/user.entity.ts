@@ -5,7 +5,6 @@ import {
   Entity,
   Index,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -71,10 +70,11 @@ export class User {
   @Column({
     name: 'password_hash',
     type: 'varchar',
+    nullable: true,
     length: 60,
   })
   @Exclude()
-  passwordHash: string;
+  passwordHash: string | null;
 
   @Column({
     name: 'password_updated_at',

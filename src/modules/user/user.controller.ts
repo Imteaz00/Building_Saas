@@ -9,7 +9,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 import { UpdateUserDto, UserDto } from './dtos/user.dto';

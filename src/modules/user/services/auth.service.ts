@@ -1,7 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 
@@ -31,12 +31,12 @@ export class AuthService {
       throw new UnauthorizedException('Wrong Credentials');
     }
 
-    if (user.state !== 'active') {
+    //if user has no password hash, it means the user has not set a password yet, so we should not allow login
+    if (!user.passwordHash) {
       throw new UnauthorizedException('User is not active');
     }
 
-    //if user has no password hash, it means the user has not set a password yet, so we should not allow login
-    if (!user.passwordHash) {
+    if (user.state !== 'active') {
       throw new UnauthorizedException('User is not active');
     }
 
@@ -101,7 +101,12 @@ export class AuthService {
     refreshToken: string,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
     const session = await this.sessionRepository.findOne({
-      where: { refreshToken },
+      where: {
+        refreshToken,
+        revokedAt: IsNull(),
+        expiresAt: MoreThan(new Date()),
+      },
+      relations: { user: { company: true } },
     });
     if (!session) {
       throw new UnauthorizedException('Invalid refresh token');
