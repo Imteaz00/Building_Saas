@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
 import { UserController } from './user.controller';
@@ -22,7 +22,7 @@ import authConfig from './config/auth.config';
     CompanyModule,
     ConfigModule.forFeature(userConfig),
     ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider()),
+    JwtModule,
   ],
 })
 export class UserModule {}

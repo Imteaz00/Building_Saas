@@ -45,4 +45,8 @@ export class UserDto {
   password?: string | null;
 }
 
-export class UpdateUserDto extends PartialType(UserDto) {}
+export class UpdateUserDto extends PartialType(UserDto) {
+  @IsNotEmpty()
+  @IsUUID()
+  userId: string;
+}

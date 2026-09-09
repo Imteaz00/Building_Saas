@@ -14,7 +14,8 @@ Here will try to note things I would like to implement as a checklist
 - add company to template
 - add issuer and audience to jwt
 - need to remove token from create user
-- check login with pass set as null
+- check login with pass set as null //seems solved for now
+- get userid from request
 
 
 Frontend:

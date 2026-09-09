@@ -2,27 +2,31 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiOperation,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
-import { UserDto } from './dtos/user.dto';
+import { UpdateUserDto, UserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { VerifyTokenDto } from './dtos/verify-token.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 import { AuthorizeGuard } from 'src/guards/authorize.guard';
+import { LoginDto, LoginResponseDto } from './dtos/login.dto';
+import { AuthService } from './services/auth.service';
+import { AllowAnonymous } from 'src/decorators/allow-anonymous.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new user with a verification token' })
@@ -55,12 +59,26 @@ export class UserController {
     return { exists };
   }
 
-  //   @Patch('update-password/:userId')
-  //   @ApiOperation({ summary: "Update a user's password" })
-  //   async updatePassword(
-  //     @Param('userId') userId: string,
-  //     @Body('password') password: string,
-  //   ): Promise<User> {
-  //     return await this.userService.updatePassword(userId, password);
-  //   }
+  @Patch('update')
+  @ApiOperation({ summary: "Update a user's details including password" })
+  async updateUser(@Body() user: UpdateUserDto): Promise<UserResponseDto> {
+    return await this.userService.updateUser(user);
+  }
+
+  @AllowAnonymous()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login a user and return an access token' })
+  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
+    return await this.authService.login(loginDto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using a refresh token' })
+  async refreshToken(
+    @Body('refreshToken') refreshToken: string,
+  ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
+    return await this.authService.refreshAccessToken(refreshToken);
+  }
 }

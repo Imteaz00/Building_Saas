@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import type { ConfigType } from '@nestjs/config';
+import { MailerService } from '@nestjs-modules/mailer';
 
 import {
   Repository,
@@ -18,7 +19,7 @@ import {
 import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
-import { UserDto } from './dtos/user.dto';
+import { UpdateUserDto, UserDto } from './dtos/user.dto';
 import { BcryptProvider } from './providers/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
@@ -40,6 +41,7 @@ export class UserService {
 
     private readonly bcryptProvider: BcryptProvider,
     private readonly companyService: CompanyService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createUser(
@@ -47,11 +49,14 @@ export class UserService {
   ): Promise<{ user: UserResponseDto; token: string }> {
     try {
       const where: any = [
-        { email: userDto.email },
         { username: userDto.username },
+        { email: userDto.email, company: { id: userDto.companyId } },
       ];
       if (userDto.phone) {
-        where.push({ phone: userDto.phone });
+        where.push({
+          phone: userDto.phone,
+          company: { id: userDto.companyId },
+        });
       }
       const existingUser = await this.userRepository.findOne({
         where: where,
@@ -72,13 +77,15 @@ export class UserService {
         throw new BadRequestException('Invalid username');
       }
 
-      const hashedPassword = null;
+      const passwordHash = userDto.password
+        ? await this.bcryptProvider.hashData(userDto.password)
+        : 'notset';
 
       const { newUser, token } = await this.dataSource.transaction(
         async (manager) => {
           let newUser = manager.create(User, {
             ...userDto,
-            passwordHash: hashedPassword,
+            passwordHash,
             company: { id: company.id },
             state: 'pending-activation',
           });
@@ -95,6 +102,13 @@ export class UserService {
           return { newUser, token };
         },
       );
+
+      await this.mailerService.sendMail({
+        to: newUser.email,
+        subject: 'Verify your email',
+        html: `This is your token: ${token}`,
+      });
+
       return {
         user: {
           id: newUser.id,
@@ -120,12 +134,10 @@ export class UserService {
 
     const token = randomBytes(32).toString('hex');
     try {
-      //   const tokenHash = await this.bcryptProvider.hashData(token);
-      const tokenHash = token;
       const verification = repo.create({
         user: { id: userId },
         purpose,
-        tokenHash,
+        token,
         expiresAt: new Date(
           Date.now() + this.config.verificationTokenExpiry * 60 * 1000,
         ),
@@ -158,11 +170,7 @@ export class UserService {
         throw new BadRequestException('Verification token has expired');
       }
 
-      const isMatch = await this.bcryptProvider.compareData(
-        token,
-        verification.tokenHash,
-      );
-      if (!isMatch) {
+      if (verification.token !== token) {
         return false;
       }
 
@@ -228,23 +236,45 @@ export class UserService {
     }
   }
 
-  //   async updatePassword(userId: string, password: string) {
-  //     try {
-  //       const user = await this.userRepository.findOne({ where: { id: userId } });
-  //       if (!user) {
-  //         throw new NotFoundException('User not found');
-  //       }
+  async updateUser(user: UpdateUserDto): Promise<UserResponseDto> {
+    try {
+      if (!user.userId) {
+        throw new BadRequestException('User ID is required');
+      }
+      const existingUser = await this.userRepository.findOne({
+        where: { id: user.userId },
+      });
+      if (!existingUser) {
+        throw new NotFoundException('User not found');
+      }
 
-  //       const verification = await this.verificationRepository.findOne({
-  //         where: { user: { id: userId } },
-  //         order: { createdAt: 'DESC' },
-  //       });
+      if (user.password) {
+        user.password = await this.bcryptProvider.hashData(user.password);
+      }
 
-  //       const hashedPassword = await this.bcryptProvider.hashData(password);
-  //       user.password = hashedPassword;
-  //       return await this.userRepository.save(user);
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   }
+      const updatedUser = await this.userRepository.save(user);
+      if (!updatedUser) {
+        throw new Error('Failed to update user');
+      }
+      return {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        username: updatedUser.username,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getUserByUserName(username: string): Promise<User | null> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { username },
+      });
+      return user || null;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

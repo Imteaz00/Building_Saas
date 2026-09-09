@@ -64,3 +64,15 @@ All the notes while I build the backend will be here. Its to probably better to 
 - get notification template by id, filter
 - add validation pipes for uuids
 - update template
+
+7 sep
+- implement jwt auth
+- added company slug and slug based username
+- now user name is king instead of email
+
+9 sep
+- email setup using gmail for now
+- implement refresh token
+- refresh access token with refresh token
+- anonymous access
+

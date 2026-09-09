@@ -24,14 +24,6 @@ export class CompanyController {
     return this.companyService.createCompany(companyDto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a company by ID' })
-  async getCompanyById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CompanyResponseDto> {
-    return await this.companyService.getCompanyById(id);
-  }
-
   @Get('/get-all-ids')
   @ApiOperation({
     summary: 'Get IDs of all companies with legal names and trading names',
@@ -40,6 +32,14 @@ export class CompanyController {
     { id: string; legalName: string; tradingName: string }[]
   > {
     return await this.companyService.getCompanyIds();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a company by ID' })
+  async getCompanyById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<CompanyResponseDto> {
+    return await this.companyService.getCompanyById(id);
   }
 
   @Get('/validate-slug/:slug')

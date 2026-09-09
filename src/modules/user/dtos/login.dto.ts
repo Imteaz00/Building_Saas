@@ -1,10 +1,35 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import {
+  IsDate,
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class LoginDto {
-  @IsEmail()
-  email: string;
+  @IsString()
+  @IsNotEmpty()
+  username: string;
 
   @IsString()
   @MinLength(8)
   password: string;
+}
+
+export class LoginResponseDto {
+  @IsString()
+  @IsNotEmpty()
+  accessToken: string;
+
+  @IsNotEmpty()
+  @IsDate()
+  accessTokenExpiresAt: Date;
+
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
+
+  @IsNotEmpty()
+  @IsDate()
+  refreshTokenExpiresAt: Date;
 }

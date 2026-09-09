@@ -21,17 +21,26 @@ export class UserSession {
   @CreateDateColumn({ name: 'issued_at' })
   issuedAt: Date;
 
-  @UpdateDateColumn({ name: 'last_seen' })
-  lastSeen: Date;
+  @Column({ name: 'last_seen_at', type: 'timestamp', nullable: false })
+  lastSeenAt: Date;
 
   @Column({ name: 'expires_at', type: 'timestamp', nullable: false })
   expiresAt: Date;
 
-  @DeleteDateColumn({ name: 'revoked_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'revoked_at', type: 'timestamp', nullable: true })
   revokedAt: Date | null;
 
   @Column({ name: 'source_ip', type: 'varchar', length: 45, nullable: true })
   sourceIp: string | null;
+
+  @Column({
+    name: 'refresh_token_hash',
+    type: 'varchar',
+    length: 32,
+    nullable: false,
+    unique: true,
+  })
+  refreshToken: string;
 
   //user agent
 }

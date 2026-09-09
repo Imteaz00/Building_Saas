@@ -5,12 +5,14 @@ import {
   Entity,
   Index,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
 import { Company } from '../../company/company.entity';
+import { UserSession } from './session.entity';
 
 @Entity()
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
@@ -69,11 +71,10 @@ export class User {
   @Column({
     name: 'password_hash',
     type: 'varchar',
-    nullable: true,
     length: 60,
   })
   @Exclude()
-  passwordHash: string | null;
+  passwordHash: string;
 
   @Column({
     name: 'password_updated_at',

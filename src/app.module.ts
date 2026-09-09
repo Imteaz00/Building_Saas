@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -18,21 +19,17 @@ import databaseConfig from './config/databse.config';
 import envValidator from './config/env.validatior';
 import { AuthorizeGuard } from './guards/authorize.guard';
 import authConfig from './modules/user/config/auth.config';
+import emailConfig from './config/email.config';
 
 const ENV = process.env.NODE_ENV;
 @Module({
   imports: [
-    CompanyModule,
-    UserModule,
-
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: !ENV ? '.env' : `.env.${ENV}`,
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, emailConfig],
       validationSchema: envValidator,
     }),
-
-    ConfigModule.forFeature(authConfig),
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -44,7 +41,25 @@ const ENV = process.env.NODE_ENV;
       }),
     }),
 
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('email.host'),
+          port: configService.get('email.port'),
+          secure: configService.get('email.secure'),
+          auth: {
+            user: configService.get('email.auth.user'),
+            pass: configService.get('email.auth.pass'),
+          },
+        },
+      }),
+    }),
+
+    ConfigModule.forFeature(authConfig),
     JwtModule.registerAsync(authConfig.asProvider()),
+    CompanyModule,
+    UserModule,
     RoleModule,
     AuditLogModule,
     NotificationModule,
@@ -53,6 +68,9 @@ const ENV = process.env.NODE_ENV;
     AnnouncementModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: 'APP_GUARD', useClass: AuthorizeGuard }],
+  providers: [
+    AppService,
+    //  { provide: 'APP_GUARD', useClass: AuthorizeGuard }
+  ],
 })
 export class AppModule {}
