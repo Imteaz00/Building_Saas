@@ -1,32 +1,39 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
+import type { Request } from 'express';
 
 import { LoginDto, LoginResponseDto } from '../dtos/login.dto';
 import { UserService } from '../user.service';
-import { BcryptProvider } from '../providers/bcrypt.provider';
-import authConfig from '../config/auth.config';
+import { BcryptProvider } from '../../../providers/bcrypt.provider';
 import { UserSession } from '../entities/session.entity';
+import { UAParserProvider } from '../../../providers/uaparser.provider';
+import { ActiveUserType } from 'src/interfaces/active-user.interface';
+import { JwtProvider } from 'src/providers/jwt.provider';
+import userConfig from '../config/user.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly bcryptProvider: BcryptProvider,
-    private readonly jwtService: JwtService,
+    private readonly jwtProvider: JwtProvider,
+    private readonly uaParserProvider: UAParserProvider,
 
     @InjectRepository(UserSession)
     private sessionRepository: Repository<UserSession>,
 
-    @Inject(authConfig.KEY)
-    private readonly config: ConfigType<typeof authConfig>,
+    @Inject(userConfig.KEY)
+    private readonly config: ConfigType<typeof userConfig>,
   ) {}
 
-  async login(LoginDto: LoginDto): Promise<LoginResponseDto> {
-    const user = await this.userService.getUserByUserName(LoginDto.username);
+  async login(LoginDto: LoginDto, req: Request): Promise<LoginResponseDto> {
+    const user = await this.userService.getUserByUserName({
+      username: LoginDto.username,
+      company: true,
+    });
     if (!user) {
       throw new UnauthorizedException('Wrong Credentials');
     }
@@ -49,19 +56,30 @@ export class AuthService {
       throw new UnauthorizedException('Wrong Credentials');
     }
 
-    const accessToken = await this.jwtService.signAsync(
-      { sub: user.id, companyId: user.company.id },
-      {
-        secret: this.config.secret,
-        expiresIn: this.config.expiresIn,
-      },
+    const { accessToken, accessTokenExpiresAt } =
+      await this.jwtProvider.createAccessToken({
+        sub: user.id,
+        companyId: user.company.id,
+        role: user.role,
+      });
+
+    const userAgent = this.uaParserProvider.parseUserAgent(
+      req.headers['user-agent'] || '',
     );
 
-    const refreshTokenData = await this.createSession(user.id);
+    const sourceIp = req.headers['x-forwarded-for']
+      ? (req.headers['x-forwarded-for'] as string).split(',')[0].trim()
+      : req.socket.remoteAddress || null;
+
+    const refreshTokenData = await this.createSession(
+      user.id,
+      userAgent,
+      sourceIp,
+    );
 
     return {
       accessToken,
-      accessTokenExpiresAt: new Date(Date.now() + this.config.expiresIn * 1000),
+      accessTokenExpiresAt,
       refreshToken: refreshTokenData.token,
       refreshTokenExpiresAt: refreshTokenData.expires_at,
     };
@@ -69,14 +87,21 @@ export class AuthService {
 
   async createSession(
     userId: string,
+    userAgent: string,
+    sourceIp: string | null,
   ): Promise<{ token: string; expires_at: Date }> {
     const issuedAt = new Date();
     const lastSeenAt = new Date();
 
     const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + this.config.expiresIn);
+    expiresAt.setSeconds(
+      expiresAt.getSeconds() + this.config.refreshTokenExpiry,
+    );
 
     const refreshToken = randomBytes(32).toString('hex');
+    const refreshTokenHash = createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
 
     try {
       let session = this.sessionRepository.create({
@@ -84,14 +109,16 @@ export class AuthService {
         issuedAt,
         lastSeenAt,
         expiresAt,
-        refreshToken,
+        refreshTokenHash,
+        sourceIp,
+        userAgent,
       });
 
       session = await this.sessionRepository.save(session);
       if (!session) {
         throw new Error('Failed to create session');
       }
-      return { token: session.refreshToken, expires_at: session.expiresAt };
+      return { token: refreshToken, expires_at: session.expiresAt };
     } catch (error) {
       throw error;
     }
@@ -99,12 +126,18 @@ export class AuthService {
 
   async refreshAccessToken(
     refreshToken: string,
+    user: ActiveUserType,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
+    const userId = user.sub;
+    const refreshTokenHash = createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
     const session = await this.sessionRepository.findOne({
       where: {
-        refreshToken,
+        refreshTokenHash,
         revokedAt: IsNull(),
         expiresAt: MoreThan(new Date()),
+        user: { id: userId },
       },
       relations: { user: { company: true } },
     });
@@ -112,20 +145,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const accessToken = await this.jwtService.signAsync(
-      { sub: session.user.id, companyId: session.user.company.id },
-      {
-        secret: this.config.secret,
-        expiresIn: this.config.expiresIn,
-      },
-    );
+    const { accessToken, accessTokenExpiresAt } =
+      await this.jwtProvider.createAccessToken(user);
 
     session.lastSeenAt = new Date();
     await this.sessionRepository.save(session);
 
     return {
       accessToken,
-      accessTokenExpiresAt: new Date(Date.now() + this.config.expiresIn * 1000),
+      accessTokenExpiresAt,
     };
   }
 }

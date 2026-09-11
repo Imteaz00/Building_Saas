@@ -94,7 +94,7 @@ export class CompanyService {
       const existingCompany = await this.companyRepository.findOne({
         where: { slug },
       });
-      return !existingCompany;
+      return !!existingCompany;
     } catch (error) {
       throw error;
     }

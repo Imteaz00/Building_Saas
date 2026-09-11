@@ -17,8 +17,18 @@ Here will try to note things I would like to implement as a checklist
 - check login with pass set as null //seems solved for now
 - get userid from request
 - validateusername using company name
+- should hash refresh token in future// done
+- cron job for mailing
 
 
 Frontend:
 - Below bar should stay
 - add dark mode
+
+
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTg0MmNhZS03NTU2LTRiNjktOTVlYy01OGQ5MzY5NWM5Y2IiLCJjb21wYW55SWQiOiI3MjQyMDhjMC05MTc1LTRhOWYtOTliNC1jNDBkZTdkM2VkOGUiLCJpYXQiOjE3ODkxMzY4MDYsImV4cCI6MTc4OTEzNzcwNn0.vwpLKyp2q_ueiBr_RkSY3sUCvHEJhwLV9YY6EH98LI4",
+  "accessTokenExpiresAt": "2026-09-11T14:41:46.716Z",
+  "refreshToken": "26b2b679c00238e934a73eddfef01adab39305641d179a2e3ff42e6b0fa22e03",
+  "refreshTokenExpiresAt": "2026-09-11T14:41:46.556Z"
+}

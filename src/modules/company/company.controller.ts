@@ -6,7 +6,7 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
 import { CompanyDto } from './dtos/company.dto';
@@ -16,7 +16,8 @@ import { CompanyResponseDto } from './dtos/company-response.dto';
 export class CompanyController {
   constructor(private companyService: CompanyService) {}
 
-  @Post()
+  @Post('create')
+  @ApiBearerAuth('Authorization')
   @ApiOperation({ summary: 'Create a new company' })
   async createCompany(
     @Body() companyDto: CompanyDto,

@@ -18,8 +18,10 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/databse.config';
 import envValidator from './config/env.validatior';
 import { AuthorizeGuard } from './guards/authorize.guard';
-import authConfig from './modules/user/config/auth.config';
+import authConfig from './config/auth.config';
 import emailConfig from './config/email.config';
+import { SystemInitService } from './system-init.service';
+import { BcryptProvider } from './providers/bcrypt.provider';
 
 const ENV = process.env.NODE_ENV;
 @Module({
@@ -27,7 +29,7 @@ const ENV = process.env.NODE_ENV;
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: !ENV ? '.env' : `.env.${ENV}`,
-      load: [appConfig, databaseConfig, emailConfig],
+      load: [appConfig, databaseConfig, emailConfig, authConfig],
       validationSchema: envValidator,
     }),
 
@@ -56,8 +58,7 @@ const ENV = process.env.NODE_ENV;
       }),
     }),
 
-    ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider()),
+    JwtModule.registerAsync({ global: true, ...authConfig.asProvider() }),
     CompanyModule,
     UserModule,
     RoleModule,
@@ -70,7 +71,9 @@ const ENV = process.env.NODE_ENV;
   controllers: [AppController],
   providers: [
     AppService,
-    //  { provide: 'APP_GUARD', useClass: AuthorizeGuard }
+    { provide: 'APP_GUARD', useClass: AuthorizeGuard },
+    SystemInitService,
+    BcryptProvider,
   ],
 })
 export class AppModule {}

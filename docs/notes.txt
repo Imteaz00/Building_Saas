@@ -76,3 +76,8 @@ All the notes while I build the backend will be here. Its to probably better to 
 - refresh access token with refresh token
 - anonymous access
 
+11 sep
+- token length in env
+- read ip and user agent from requests
+- initial company and user setup when startup, this creates superadmin
+- decorator to separate admin vs super admin user creation

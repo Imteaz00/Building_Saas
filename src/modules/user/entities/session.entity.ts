@@ -32,13 +32,14 @@ export class UserSession {
   sourceIp: string | null;
 
   @Column({
-    name: 'refresh_token',
+    name: 'refresh_token_hash',
     type: 'varchar',
     length: 64,
     nullable: false,
     unique: true,
   })
-  refreshToken: string;
+  refreshTokenHash: string;
 
-  //user agent
+  @Column({ name: 'user_agent', type: 'varchar', length: 512, nullable: true })
+  userAgent: string | null;
 }

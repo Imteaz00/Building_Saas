@@ -10,7 +10,7 @@ import { Request } from 'express';
 import type { ConfigType } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 
-import authConfig from 'src/modules/user/config/auth.config';
+import authConfig from 'src/config/auth.config';
 import { USER } from 'src/constants/contants';
 
 @Injectable()

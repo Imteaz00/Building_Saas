@@ -20,12 +20,14 @@ import { randomBytes } from 'crypto';
 
 import { User } from './entities/user.entity';
 import { UpdateUserDto, UserDto } from './dtos/user.dto';
-import { BcryptProvider } from './providers/bcrypt.provider';
+import { BcryptProvider } from '../../providers/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
 import userConfig from './config/user.config';
 import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
 import { UserResponseDto } from 'src/modules/user/dtos/user-response.dto';
+import { ActiveUserType } from 'src/interfaces/active-user.interface';
+import { JwtProvider } from 'src/providers/jwt.provider';
 
 @Injectable()
 export class UserService {
@@ -42,20 +44,22 @@ export class UserService {
     private readonly bcryptProvider: BcryptProvider,
     private readonly companyService: CompanyService,
     private readonly mailerService: MailerService,
+    private readonly jwtProvider: JwtProvider,
   ) {}
 
   async createUser(
     userDto: UserDto,
-  ): Promise<{ user: UserResponseDto; token: string }> {
+    companyId: string,
+  ): Promise<UserResponseDto> {
     try {
       const where: any = [
         { username: userDto.username },
-        { email: userDto.email, company: { id: userDto.companyId } },
+        { email: userDto.email, company: { id: companyId } },
       ];
       if (userDto.phone) {
         where.push({
           phone: userDto.phone,
-          company: { id: userDto.companyId },
+          company: { id: companyId },
         });
       }
       const existingUser = await this.userRepository.findOne({
@@ -67,15 +71,9 @@ export class UserService {
         );
       }
 
-      const company = await this.companyService.getCompanyById(
-        userDto.companyId,
-      );
+      const company = await this.companyService.getCompanyById(companyId);
 
-      const userCompanySlug = userDto.username.split('@')[1];
-
-      if (!userCompanySlug || userCompanySlug !== company.slug) {
-        throw new BadRequestException('Invalid username');
-      }
+      const usernameWithCompany = `${userDto.username}@${company.slug}`;
 
       const passwordHash = userDto.password
         ? await this.bcryptProvider.hashData(userDto.password)
@@ -86,6 +84,7 @@ export class UserService {
           let newUser = manager.create(User, {
             ...userDto,
             passwordHash,
+            username: usernameWithCompany,
             company: { id: company.id },
             state: 'pending-activation',
           });
@@ -110,13 +109,10 @@ export class UserService {
       });
 
       return {
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          phone: newUser.phone,
-          username: newUser.username,
-        },
-        token,
+        id: newUser.id,
+        email: newUser.email,
+        phone: newUser.phone,
+        username: newUser.username,
       };
     } catch (error) {
       throw error;
@@ -132,7 +128,9 @@ export class UserService {
       ? manager.getRepository(Verification)
       : this.verificationRepository;
 
-    const token = randomBytes(32).toString('hex');
+    const token = randomBytes(this.config.verificationTokenLength).toString(
+      'hex',
+    );
     try {
       const verification = repo.create({
         user: { id: userId },
@@ -152,7 +150,9 @@ export class UserService {
     }
   }
 
-  async verifyToken(verifyTokenDto: VerifyTokenDto): Promise<boolean> {
+  async verifyToken(
+    verifyTokenDto: VerifyTokenDto,
+  ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
     const { token, userId } = verifyTokenDto;
     try {
       const verification = await this.verificationRepository.findOne({
@@ -171,7 +171,7 @@ export class UserService {
       }
 
       if (verification.token !== token) {
-        return false;
+        throw new BadRequestException('Invalid verification token');
       }
 
       const { result, user } = await this.dataSource.transaction(
@@ -190,9 +190,7 @@ export class UserService {
 
           const user = await manager.update(
             User,
-            {
-              where: { id: userId },
-            },
+            { id: userId },
             { state: 'active' },
           );
 
@@ -200,7 +198,15 @@ export class UserService {
         },
       );
 
-      return result.affected === 1;
+      if (result.affected === 0) {
+        throw new Error('Could not verify token');
+      }
+      const { accessToken, accessTokenExpiresAt } =
+        await this.jwtProvider.createAccessToken({
+          sub: userId,
+        });
+
+      return { accessToken, accessTokenExpiresAt };
     } catch (error) {
       throw error;
     }
@@ -225,34 +231,52 @@ export class UserService {
     }
   }
 
-  async validateUsername(username: string): Promise<boolean> {
+  async validateUsername(
+    username: string,
+    activeUser: ActiveUserType,
+  ): Promise<string | false> {
+    const companyId = activeUser.companyId;
     try {
+      const company = await this.companyService.getCompanyById(companyId);
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+
+      const newUsername = `${username}@${company.slug}`;
       const user = await this.userRepository.findOne({
-        where: { username },
+        where: { username: newUsername },
       });
-      return !!user;
+      if (user) {
+        return newUsername;
+      }
+      return false;
     } catch (error) {
       throw error;
     }
   }
 
-  async updateUser(user: UpdateUserDto): Promise<UserResponseDto> {
+  async updateUser(
+    user: UpdateUserDto,
+    activeUser: ActiveUserType,
+  ): Promise<UserResponseDto> {
     try {
-      if (!user.userId) {
-        throw new BadRequestException('User ID is required');
-      }
+      const userId = activeUser.sub;
       const existingUser = await this.userRepository.findOne({
-        where: { id: user.userId },
+        where: { id: userId },
       });
       if (!existingUser) {
         throw new NotFoundException('User not found');
       }
 
       if (user.username && user.username !== existingUser.username) {
-        if (await this.validateUsername(user.username)) {
-          throw new ConflictException('Username already exists'); //change after updatiing validateUsername
+        const newUsername = await this.validateUsername(
+          user.username,
+          activeUser,
+        );
+        if (!newUsername) {
+          throw new ConflictException('Username already exists');
         }
-        existingUser.username = user.username;
+        existingUser.username = newUsername;
       }
 
       if (user.password) {
@@ -260,12 +284,17 @@ export class UserService {
           user.password,
         );
         existingUser.passwordUpdatedAt = new Date();
+        //revoke all existing sessions for the user
       }
-      const { userId, password, ...updateData } = user;
-      const updatedUser = await this.userRepository.save({
-        ...existingUser,
-        ...updateData,
-      });
+      // Update other fields if provided
+      if (user.email) {
+        existingUser.email = user.email;
+      }
+      if (user.phone) {
+        existingUser.phone = user.phone;
+      }
+
+      const updatedUser = await this.userRepository.save(existingUser);
 
       if (!updatedUser) {
         throw new Error('Failed to update user');
@@ -281,10 +310,17 @@ export class UserService {
     }
   }
 
-  async getUserByUserName(username: string): Promise<User | null> {
+  async getUserByUserName({
+    username,
+    company = false,
+  }: {
+    username: string;
+    company?: boolean;
+  }): Promise<User | null> {
     try {
       const user = await this.userRepository.findOne({
         where: { username },
+        relations: company ? { company: true } : {},
       });
       return user || null;
     } catch (error) {

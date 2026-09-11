@@ -5,6 +5,10 @@ export default registerAs('user', () => ({
     process.env.VERIFICATION_TOKEN_EXPIRY || '900',
     10,
   ),
+  verificationTokenLength: parseInt(
+    process.env.VERIFICATION_TOKEN_LENGTH || '8',
+    10,
+  ),
   refreshTokenExpiry: parseInt(
     process.env.REFRESH_TOKEN_EXPIRY || '604800',
     10,

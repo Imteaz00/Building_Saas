@@ -23,7 +23,7 @@ export class Verification {
   @Column({
     type: 'varchar',
     nullable: false,
-    length: 16,
+    length: process.env.VERIFICATION_TOKEN_LENGTH || 32,
     unique: true,
   })
   token: string;

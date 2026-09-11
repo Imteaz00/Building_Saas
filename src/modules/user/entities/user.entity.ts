@@ -39,6 +39,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: [
+      'superadmin',
       'admin',
       'building_manager',
       'accountant',
@@ -50,6 +51,7 @@ export class User {
     nullable: true,
   })
   role:
+    | 'superadmin'
     | 'admin'
     | 'building_manager'
     | 'accountant'
