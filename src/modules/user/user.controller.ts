@@ -60,9 +60,6 @@ export class UserController {
     @Param('userId') userId: string,
     @Req() req: Request,
   ): Promise<UserResponseDto> {
-    console.log(req.headers['x-forwarded-for']);
-    console.log(req.socket.remoteAddress);
-    console.log(req.headers['user-agent']);
     return await this.userService.getUserById(userId);
   }
 
@@ -103,12 +100,11 @@ export class UserController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('Authorization')
+  @AllowAnonymous()
   @ApiOperation({ summary: 'Refresh access token using a refresh token' })
   async refreshAccessToken(
     @Body('refreshToken') refreshToken: string,
-    @ActiveUser() activeUser: ActiveUserType,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
-    return await this.authService.refreshAccessToken(refreshToken, activeUser);
+    return await this.authService.refreshAccessToken(refreshToken);
   }
 }

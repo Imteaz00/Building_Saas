@@ -28,6 +28,7 @@ import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
 import { UserResponseDto } from 'src/modules/user/dtos/user-response.dto';
 import { ActiveUserType } from 'src/interfaces/active-user.interface';
 import { JwtProvider } from 'src/providers/jwt.provider';
+import { UserSession } from './entities/session.entity';
 
 @Injectable()
 export class UserService {
@@ -35,6 +36,8 @@ export class UserService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Verification)
     private verificationRepository: Repository<Verification>,
+    @InjectRepository(UserSession)
+    private sessionRepository: Repository<UserSession>,
 
     @InjectDataSource() private dataSource: DataSource,
 
@@ -52,8 +55,10 @@ export class UserService {
     companyId: string,
   ): Promise<UserResponseDto> {
     try {
+      const company = await this.companyService.getCompanyById(companyId);
+      const usernameWithCompany = `${userDto.username}@${company.slug}`;
       const where: any = [
-        { username: userDto.username },
+        { username: usernameWithCompany, company: { id: companyId } },
         { email: userDto.email, company: { id: companyId } },
       ];
       if (userDto.phone) {
@@ -70,10 +75,6 @@ export class UserService {
           'User with this email or username already exists',
         );
       }
-
-      const company = await this.companyService.getCompanyById(companyId);
-
-      const usernameWithCompany = `${userDto.username}@${company.slug}`;
 
       const passwordHash = userDto.password
         ? await this.bcryptProvider.hashData(userDto.password)
@@ -174,36 +175,36 @@ export class UserService {
         throw new BadRequestException('Invalid verification token');
       }
 
-      const { result, user } = await this.dataSource.transaction(
-        async (manager) => {
-          const result = await manager.update(
-            Verification,
-            {
-              id: verification.id,
-              usedAt: IsNull(),
-              expiresAt: MoreThan(new Date()),
-            },
-            {
-              usedAt: new Date(),
-            },
-          );
+      const result = await this.dataSource.transaction(async (manager) => {
+        const result = await manager.update(
+          Verification,
+          {
+            id: verification.id,
+            usedAt: IsNull(),
+            expiresAt: MoreThan(new Date()),
+          },
+          {
+            usedAt: new Date(),
+          },
+        );
 
-          const user = await manager.update(
-            User,
-            { id: userId },
-            { state: 'active' },
-          );
-
-          return { result, user };
-        },
-      );
+        await manager.update(User, { id: userId }, { state: 'active' });
+        return result;
+      });
 
       if (result.affected === 0) {
         throw new Error('Could not verify token');
       }
+
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: { company: true },
+      });
       const { accessToken, accessTokenExpiresAt } =
         await this.jwtProvider.createAccessToken({
           sub: userId,
+          companyId: user?.company.id,
+          role: user?.role,
         });
 
       return { accessToken, accessTokenExpiresAt };
@@ -247,9 +248,9 @@ export class UserService {
         where: { username: newUsername },
       });
       if (user) {
-        return newUsername;
+        return false;
       }
-      return false;
+      return newUsername;
     } catch (error) {
       throw error;
     }
@@ -285,6 +286,15 @@ export class UserService {
         );
         existingUser.passwordUpdatedAt = new Date();
         //revoke all existing sessions for the user
+        const now = new Date();
+        await this.sessionRepository.update(
+          {
+            user: { id: userId },
+            revokedAt: IsNull(),
+            expiresAt: MoreThan(now),
+          },
+          { revokedAt: now },
+        );
       }
       // Update other fields if provided
       if (user.email) {

@@ -126,9 +126,7 @@ export class AuthService {
 
   async refreshAccessToken(
     refreshToken: string,
-    user: ActiveUserType,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
-    const userId = user.sub;
     const refreshTokenHash = createHash('sha256')
       .update(refreshToken)
       .digest('hex');
@@ -137,7 +135,6 @@ export class AuthService {
         refreshTokenHash,
         revokedAt: IsNull(),
         expiresAt: MoreThan(new Date()),
-        user: { id: userId },
       },
       relations: { user: { company: true } },
     });
@@ -145,9 +142,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const { accessToken, accessTokenExpiresAt } =
-      await this.jwtProvider.createAccessToken(user);
+    if (session.user.state !== 'active') {
+      throw new UnauthorizedException('User is not active');
+    }
 
+    const { accessToken, accessTokenExpiresAt } =
+      await this.jwtProvider.createAccessToken({
+        sub: session.user.id,
+        companyId: session.user.company.id,
+        role: session.user.role,
+      });
     session.lastSeenAt = new Date();
     await this.sessionRepository.save(session);
 
