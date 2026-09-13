@@ -20,8 +20,13 @@ export class Verification {
   @Column({ type: 'enum', enum: ['activation', 'reset'], nullable: false })
   purpose: 'activation' | 'reset';
 
-  @Column({ name: 'token_hash', type: 'varchar', nullable: false, length: 255 })
-  tokenHash: string;
+  @Column({
+    type: 'varchar',
+    nullable: false,
+    length: process.env.VERIFICATION_TOKEN_LENGTH || 32,
+    unique: true,
+  })
+  token: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -11,10 +11,12 @@ import {
 import { Exclude } from 'class-transformer';
 
 import { Company } from '../../company/company.entity';
+import { UserSession } from './session.entity';
 
 @Entity()
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
 @Index(['company', 'phone'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['company', 'username'], { unique: true, where: 'deleted_at IS NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,6 +29,9 @@ export class User {
   name: string;
 
   @Column({ type: 'varchar', nullable: false, length: 50 })
+  username: string;
+
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   email: string;
 
   @Column({ type: 'varchar', nullable: true, length: 15 })
@@ -35,6 +40,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: [
+      'superadmin',
       'admin',
       'building_manager',
       'accountant',
@@ -46,6 +52,7 @@ export class User {
     nullable: true,
   })
   role:
+    | 'superadmin'
     | 'admin'
     | 'building_manager'
     | 'accountant'

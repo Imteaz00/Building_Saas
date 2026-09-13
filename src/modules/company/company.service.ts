@@ -19,11 +19,15 @@ export class CompanyService {
   async createCompany(companyDto: CompanyDto): Promise<CompanyResponseDto> {
     try {
       const existingCompany = await this.companyRepository.findOne({
-        where: [{ email: companyDto.email }, { phone: companyDto.phone }],
+        where: [
+          { email: companyDto.email },
+          { phone: companyDto.phone },
+          { slug: companyDto.slug },
+        ],
       });
       if (existingCompany) {
         throw new ConflictException(
-          'Company with this email or phone already exists',
+          'Company with this email, phone, or slug already exists',
         );
       }
 
@@ -40,6 +44,7 @@ export class CompanyService {
         tradingName: newCompany.tradingName,
         email: newCompany.email,
         phone: newCompany.phone,
+        slug: newCompany.slug,
         // logo: newCompany?.logo,
       };
     } catch (error) {
@@ -59,6 +64,7 @@ export class CompanyService {
         tradingName: company.tradingName,
         email: company.email,
         phone: company.phone,
+        slug: company.slug,
         // logo: company?.logo,
       };
     } catch (error) {
@@ -78,6 +84,17 @@ export class CompanyService {
         legalName: company.legalName,
         tradingName: company.tradingName,
       }));
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async validateSlug(slug: string): Promise<boolean> {
+    try {
+      const existingCompany = await this.companyRepository.findOne({
+        where: { slug },
+      });
+      return !!existingCompany;
     } catch (error) {
       throw error;
     }

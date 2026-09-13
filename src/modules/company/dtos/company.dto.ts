@@ -23,6 +23,11 @@ export class CompanyDto {
   legalName: string;
 
   @IsString()
+  @MaxLength(20)
+  @IsNotEmpty()
+  slug: string;
+
+  @IsString()
   @MaxLength(50)
   @IsNotEmpty()
   address: string;

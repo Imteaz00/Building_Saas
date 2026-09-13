@@ -6,4 +6,12 @@ export default Joi.object({
   DATABASE_URL: Joi.string().required(),
   SYNCHRONIZE: Joi.boolean().required(),
   VERIFICATION_TOKEN_EXPIRY: Joi.number().required(),
+  VERIFICATION_TOKEN_LENGTH: Joi.number().required(),
+  JWT_SECRET: Joi.string().required(),
+  ACCESS_TOKEN_EXPIRY: Joi.number().required(),
+  REFRESH_TOKEN_EXPIRY: Joi.number().required(),
+  EMAIL_HOST: Joi.string().required(),
+  EMAIL_PORT: Joi.number().default(465).port().required(),
+  EMAIL_USERNAME: Joi.string().required(),
+  EMAIL_PASSWORD: Joi.string().required(),
 });

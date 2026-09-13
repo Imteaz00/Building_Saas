@@ -10,9 +10,9 @@ import {
 } from 'class-validator';
 
 export class UserDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  companyId: string;
+  companyId?: string;
 
   @IsUUID()
   @IsOptional()
@@ -24,6 +24,11 @@ export class UserDto {
   name: string;
 
   @IsNotEmpty()
+  @IsString()
+  @MaxLength(30)
+  username: string;
+
+  @IsNotEmpty()
   @IsEmail()
   @MaxLength(50)
   email: string;
@@ -33,6 +38,11 @@ export class UserDto {
   @MaxLength(15)
   @MinLength(11)
   phone?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string | null;
 }
 
 export class UpdateUserDto extends PartialType(UserDto) {}

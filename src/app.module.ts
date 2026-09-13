@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -15,18 +17,22 @@ import { AnnouncementModule } from './modules/announcement/announcement.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/databse.config';
 import envValidator from './config/env.validatior';
+import { AuthorizeGuard } from './guards/authorize.guard';
+import authConfig from './config/auth.config';
+import emailConfig from './config/email.config';
+import { SystemInitService } from './system-init.service';
+import { BcryptProvider } from './providers/bcrypt.provider';
 
 const ENV = process.env.NODE_ENV;
 @Module({
   imports: [
-    CompanyModule,
-    UserModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: !ENV ? '.env' : `.env.${ENV}`,
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, emailConfig, authConfig],
       validationSchema: envValidator,
     }),
+
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -36,6 +42,25 @@ const ENV = process.env.NODE_ENV;
         synchronize: configService.get('database.synchronize'),
       }),
     }),
+
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('email.host'),
+          port: configService.get('email.port'),
+          secure: configService.get('email.secure'),
+          auth: {
+            user: configService.get('email.auth.user'),
+            pass: configService.get('email.auth.pass'),
+          },
+        },
+      }),
+    }),
+
+    JwtModule.registerAsync({ global: true, ...authConfig.asProvider() }),
+    CompanyModule,
+    UserModule,
     RoleModule,
     AuditLogModule,
     NotificationModule,
@@ -44,6 +69,11 @@ const ENV = process.env.NODE_ENV;
     AnnouncementModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: 'APP_GUARD', useClass: AuthorizeGuard },
+    SystemInitService,
+    BcryptProvider,
+  ],
 })
 export class AppModule {}

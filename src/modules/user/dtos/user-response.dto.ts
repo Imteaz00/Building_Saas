@@ -10,6 +10,6 @@ export class UserResponseDto {
   @ApiProperty({ description: "The user's phone number" })
   phone?: string | null;
 
-  @ApiProperty({ description: 'The verification token' })
-  token: string;
+  @ApiProperty({ description: 'The user username' })
+  username: string;
 }

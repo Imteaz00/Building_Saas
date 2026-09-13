@@ -18,6 +18,7 @@ import { Document } from '../document/entities/document.entity';
 @Entity()
 @Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
 @Index(['phone'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['slug'], { unique: true, where: 'deleted_at IS NULL' })
 export class Company {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,9 +30,12 @@ export class Company {
     name: 'trading_name',
     type: 'varchar',
     nullable: false,
-    length: 100,
+    length: 50,
   })
   tradingName: string;
+
+  @Column({ type: 'varchar', nullable: false, length: 20 })
+  slug: string;
 
   @Column({ type: 'text', nullable: false })
   address: string;
