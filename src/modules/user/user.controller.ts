@@ -56,10 +56,7 @@ export class UserController {
   @Get('by-id/:userId')
   @ApiBearerAuth('Authorization')
   @ApiOperation({ summary: "Get a user's details by ID" })
-  async getUserById(
-    @Param('userId') userId: string,
-    @Req() req: Request,
-  ): Promise<UserResponseDto> {
+  async getUserById(@Param('userId') userId: string): Promise<UserResponseDto> {
     return await this.userService.getUserById(userId);
   }
 
@@ -69,12 +66,8 @@ export class UserController {
   async validateUsername(
     @Param('username') username: string,
     @ActiveUser() activeUser: ActiveUserType,
-  ): Promise<{ exists: string | false }> {
-    const exists = await this.userService.validateUsername(
-      username,
-      activeUser,
-    );
-    return { exists };
+  ): Promise<string | false> {
+    return await this.userService.validateUsername(username, activeUser);
   }
 
   @Patch('update')

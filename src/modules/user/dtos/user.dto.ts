@@ -25,7 +25,7 @@ export class UserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(30)
   username: string;
 
   @IsNotEmpty()

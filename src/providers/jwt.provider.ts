@@ -17,15 +17,10 @@ export class JwtProvider {
   async createAccessToken(
     activeUser: Partial<ActiveUserType>,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
-    const accessToken = await this.jwtService.signAsync(
-      {
-        activeUser,
-      },
-      {
-        secret: this.config.secret,
-        expiresIn: this.config.expiresIn,
-      },
-    );
+    const accessToken = await this.jwtService.signAsync(activeUser, {
+      secret: this.config.secret,
+      expiresIn: this.config.expiresIn,
+    });
     return {
       accessToken,
       accessTokenExpiresAt: new Date(Date.now() + this.config.expiresIn * 1000),

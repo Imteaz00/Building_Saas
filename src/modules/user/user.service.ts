@@ -129,7 +129,7 @@ export class UserService {
       ? manager.getRepository(Verification)
       : this.verificationRepository;
 
-    const token = randomBytes(this.config.verificationTokenLength).toString(
+    const token = randomBytes(this.config.verificationTokenLength / 2).toString(
       'hex',
     );
     try {
@@ -187,14 +187,12 @@ export class UserService {
             usedAt: new Date(),
           },
         );
-
+        if (result.affected === 0) {
+          throw new Error('Could not verify token');
+        }
         await manager.update(User, { id: userId }, { state: 'active' });
         return result;
       });
-
-      if (result.affected === 0) {
-        throw new Error('Could not verify token');
-      }
 
       const user = await this.userRepository.findOne({
         where: { id: userId },
@@ -203,7 +201,7 @@ export class UserService {
       const { accessToken, accessTokenExpiresAt } =
         await this.jwtProvider.createAccessToken({
           sub: userId,
-          companyId: user?.company.id,
+          companyId: user?.company.id, //is there a better way to do this?
           role: user?.role,
         });
 
@@ -298,9 +296,21 @@ export class UserService {
       }
       // Update other fields if provided
       if (user.email) {
+        const existingEmail = await this.userRepository.findOne({
+          where: { email: user.email, company: { id: activeUser.companyId } },
+        });
+        if (existingEmail) {
+          throw new ConflictException('Email already exists');
+        }
         existingUser.email = user.email;
       }
       if (user.phone) {
+        const existingPhone = await this.userRepository.findOne({
+          where: { phone: user.phone, company: { id: activeUser.companyId } },
+        });
+        if (existingPhone) {
+          throw new ConflictException('Phone number already exists');
+        }
         existingUser.phone = user.phone;
       }
 

@@ -20,40 +20,62 @@ export class SystemInitService implements OnModuleInit {
   }
 
   private async seedInitialDataIfNeeded() {
-    const companyCount = await this.dataSource.getRepository('Company').count();
-    if (companyCount > 0) return; // Data already exists, no need to seed
-
-    console.log('Seeding initial data...');
-
-    const passwordHash = await this.bcryptProvider.hashData('12345678');
+    console.log('Check before seeding initial data...');
+    let rootCompany: Company;
 
     await this.dataSource.transaction(async (manager) => {
-      // Create a default company
-      const defaultCompany: Company = manager.create('Company', {
-        legalName: 'Default Company',
-        slug: 'default-company',
-        tradingName: 'Default Company',
-        address: 'default address',
-        email: 'info@default.com',
-        phone: '1234567890',
-        taxRegistrationId: '123456789',
-        baseCurrency: 'USD',
-        defaultLocale: 'en-US',
-        timeZone: 'America/New_York',
-      });
-      const company = await manager.save(defaultCompany);
-
-      const superAdminUser = manager.create('User', {
-        name: 'Super Admin',
-        username: 'superadmin',
-        email: 'superadmin@example.com',
-        passwordHash,
-        role: 'superadmin',
-        state: 'active',
-        company: { id: company.id },
-        passwordUpdatedAt: new Date(),
-      });
-      await manager.save(superAdminUser);
+      try {
+        const upsertResult = await manager.upsert(
+          Company,
+          {
+            legalName: 'Default Company',
+            slug: 'default-company',
+            tradingName: 'Default Company',
+            address: 'default address',
+            email: 'info@default.com',
+            phone: '1234567890',
+            taxRegistrationId: '123456789',
+            baseCurrency: 'USD',
+            defaultLocale: 'en-US',
+            timeZone: 'America/New_York',
+          },
+          ['slug'],
+        );
+        rootCompany = await manager.findOneByOrFail(Company, {
+          slug: 'default-company',
+        });
+        console.log('Upserted company:', rootCompany);
+      } catch (error) {
+        console.warn(
+          'Company already seeding or initialized by a concurrent replica.',
+          error,
+        );
+        return;
+      }
+      try {
+        const passwordHash = await this.bcryptProvider.hashData('12345678');
+        const superAdminUser = manager.upsert(
+          'User',
+          {
+            name: 'Super Admin',
+            username: 'super-admin',
+            email: 'superadmin@example.com',
+            passwordHash,
+            role: 'superadmin',
+            state: 'active',
+            company: { id: rootCompany.id },
+            passwordUpdatedAt: new Date(),
+          },
+          ['email', 'company', 'username'],
+        );
+        console.log('Seeded successfully');
+      } catch (error) {
+        console.warn(
+          'Super Admin user already seeding or initialized by a concurrent replica.',
+          error,
+        );
+        return;
+      }
     });
   }
 }

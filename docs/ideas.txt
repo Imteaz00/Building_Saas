@@ -19,6 +19,8 @@ Here will try to note things I would like to implement as a checklist
 - validateusername using company name
 - should hash refresh token in future// done
 - cron job for mailing
+- create health route
+- probably need to take refresh token through cookies
 
 
 Frontend:

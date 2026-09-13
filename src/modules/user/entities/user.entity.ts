@@ -16,6 +16,7 @@ import { UserSession } from './session.entity';
 @Entity()
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
 @Index(['company', 'phone'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['company', 'username'], { unique: true, where: 'deleted_at IS NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,7 +28,7 @@ export class User {
   @Column({ type: 'varchar', nullable: false, length: 50 })
   name: string;
 
-  @Column({ type: 'varchar', nullable: false, length: 50, unique: true })
+  @Column({ type: 'varchar', nullable: false, length: 50 })
   username: string;
 
   @Column({ type: 'varchar', nullable: false, length: 50 })
