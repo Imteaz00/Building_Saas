@@ -10,7 +10,6 @@ import { UserService } from '../user.service';
 import { BcryptProvider } from '../../../providers/bcrypt.provider';
 import { UserSession } from '../entities/session.entity';
 import { UAParserProvider } from '../../../providers/uaparser.provider';
-import { ActiveUserType } from 'src/interfaces/active-user.interface';
 import { JwtProvider } from 'src/providers/jwt.provider';
 import userConfig from '../config/user.config';
 

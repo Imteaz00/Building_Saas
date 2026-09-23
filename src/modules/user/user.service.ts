@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import type { ConfigType } from '@nestjs/config';
-import { MailerService } from '@nestjs-modules/mailer';
 
 import {
   Repository,
@@ -17,6 +16,8 @@ import {
   IsNull,
 } from 'typeorm';
 import { randomBytes } from 'crypto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 import { User } from './entities/user.entity';
 import { UpdateUserDto, UserDto } from './dtos/user.dto';
@@ -44,27 +45,33 @@ export class UserService {
     @Inject(userConfig.KEY)
     private readonly config: ConfigType<typeof userConfig>,
 
+    @InjectQueue('notification-queue') private notificationQueue: Queue,
+
     private readonly bcryptProvider: BcryptProvider,
     private readonly companyService: CompanyService,
-    private readonly mailerService: MailerService,
     private readonly jwtProvider: JwtProvider,
   ) {}
 
   async createUser(
     userDto: UserDto,
-    companyId: string,
+    activeUser: ActiveUserType,
   ): Promise<UserResponseDto> {
     try {
-      const company = await this.companyService.getCompanyById(companyId);
+      const company = await this.companyService.getCompanyById(
+        activeUser.companyId,
+      );
       const usernameWithCompany = `${userDto.username}@${company.slug}`;
       const where: any = [
-        { username: usernameWithCompany, company: { id: companyId } },
-        { email: userDto.email, company: { id: companyId } },
+        {
+          username: usernameWithCompany,
+          company: { id: activeUser.companyId },
+        },
+        { email: userDto.email, company: { id: activeUser.companyId } },
       ];
       if (userDto.phone) {
         where.push({
           phone: userDto.phone,
-          company: { id: companyId },
+          company: { id: activeUser.companyId },
         });
       }
       const existingUser = await this.userRepository.findOne({
@@ -103,10 +110,10 @@ export class UserService {
         },
       );
 
-      await this.mailerService.sendMail({
-        to: newUser.email,
-        subject: 'Verify your email',
-        html: `This is your token: ${token}`,
+      await this.notificationQueue.add('send-verification-email', {
+        userId: newUser.id,
+        token,
+        companyId: activeUser.companyId,
       });
 
       return {

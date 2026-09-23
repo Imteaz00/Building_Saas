@@ -31,8 +31,8 @@ export class NotificationDelivery {
 
   //recipient tenant
 
-  @Column({ name: 'recipient_address', type: 'varchar', nullable: false })
-  recipientAddress: string;
+  @Column({ name: 'recipient_address', type: 'varchar', nullable: true })
+  recipientAddress?: string | null;
 
   @Column({ type: 'enum', enum: ['email', 'sms', 'in-app'], nullable: false })
   channel: 'email' | 'sms' | 'in-app';
@@ -53,7 +53,7 @@ export class NotificationDelivery {
     'queued' | 'sent' | 'failed' | 'undeliverable' | 'suppressed' | 'skipped';
 
   @Column({ type: 'text', nullable: true })
-  failureReason: string | null;
+  failureReason?: string | null;
 
   @Column({ name: 'attempt_count', type: 'int', nullable: false, default: 0 })
   attemptCount: number;

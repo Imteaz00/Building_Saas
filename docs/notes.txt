@@ -81,3 +81,12 @@ All the notes while I build the backend will be here. Its to probably better to 
 - read ip and user agent from requests
 - initial company and user setup when startup, this creates superadmin
 - decorator to separate admin vs super admin user creation
+
+22 sep
+- entities for invoice, tenant
+- initial templates while seeding
+- install bullmq
+- notification engine
+    - queue in bullmq with valkey
+    - considered template, recipients, and preferances
+    - logged even if was not sent marking undeliverable or suppressed

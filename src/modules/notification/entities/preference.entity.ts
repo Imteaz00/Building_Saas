@@ -18,6 +18,8 @@ export class NotificationPreference {
   user: User;
 
   //tenant id
+  //   @ManyToOne(() => Tenant, { nullable: true })
+  //   tenant?: Tenant | null;
 
   @Column({ name: 'event_category', type: 'varchar', nullable: false })
   eventCategory: string;
