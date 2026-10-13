@@ -22,6 +22,9 @@ import authConfig from './config/auth.config';
 import emailConfig from './config/email.config';
 import { SystemInitService } from './system-init.service';
 import { BcryptProvider } from './providers/bcrypt.provider';
+import { TenantModule } from './modules/tenant/tenant.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
+import { BullModule } from '@nestjs/bullmq';
 
 const ENV = process.env.NODE_ENV;
 @Module({
@@ -55,6 +58,19 @@ const ENV = process.env.NODE_ENV;
             pass: configService.get('email.auth.pass'),
           },
         },
+        defaults: {
+          from: '"no-reply" <no-reply@example.com>',
+        },
+      }),
+    }),
+
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('redis.host') || 'localhost',
+          port: parseInt(configService.get('redis.port') || '6379'),
+        },
       }),
     }),
 
@@ -67,6 +83,8 @@ const ENV = process.env.NODE_ENV;
     DocumentModule,
     PropertyModule,
     AnnouncementModule,
+    TenantModule,
+    InvoiceModule,
   ],
   controllers: [AppController],
   providers: [

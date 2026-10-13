@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -17,13 +16,11 @@ import { UpdateUserDto, UserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { VerifyTokenDto } from './dtos/verify-token.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { AuthorizeGuard } from 'src/guards/authorize.guard';
 import { LoginDto, LoginResponseDto } from './dtos/login.dto';
 import { AuthService } from './services/auth.service';
 import { AllowAnonymous } from 'src/decorators/allow-anonymous.decorator';
 import { ActiveUser } from 'src/decorators/active-user.decorator';
 import type { ActiveUserType } from 'src/interfaces/active-user.interface';
-import { CompanyId } from 'src/decorators/company-id.decorator';
 
 //   @ApiBearerAuth('Authorization')
 //   @UseGuards(AuthorizeGuard)
@@ -39,9 +36,9 @@ export class UserController {
   @ApiOperation({ summary: 'Create a new user with a verification token' })
   async createUser(
     @Body() userDto: UserDto,
-    @CompanyId() companyId: string,
+    @ActiveUser() activeUser: ActiveUserType,
   ): Promise<UserResponseDto> {
-    return await this.userService.createUser(userDto, companyId);
+    return await this.userService.createUser(userDto, activeUser);
   }
 
   @AllowAnonymous()

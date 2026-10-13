@@ -15,17 +15,17 @@ export class NotificationEvent {
   @ManyToOne(() => Company, { nullable: false })
   company: Company;
 
-  @Column({ name: 'event_key' }) //need to know
+  @Column({ name: 'event_key', nullable: false }) //need to know
   eventKey: string;
 
-  @Column({ name: 'target_type' })
+  @Column({ name: 'target_type', nullable: false })
   targetType: string;
 
-  @Column({ name: 'target_id' })
+  @Column({ name: 'target_id', nullable: false })
   targetId: string;
 
-  @Column({ name: 'raised_by' })
-  raisedBy: string;
+  @Column({ name: 'raised_by_module', nullable: false })
+  raisedByModule: string;
 
   @Column({ type: 'json', nullable: false })
   payload: Record<string, unknown>;

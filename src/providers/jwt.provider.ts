@@ -15,7 +15,7 @@ export class JwtProvider {
   ) {}
 
   async createAccessToken(
-    activeUser: Partial<ActiveUserType>,
+    activeUser: ActiveUserType,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
     const accessToken = await this.jwtService.signAsync(activeUser, {
       secret: this.config.secret,

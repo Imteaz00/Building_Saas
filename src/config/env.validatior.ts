@@ -14,4 +14,6 @@ export default Joi.object({
   EMAIL_PORT: Joi.number().default(465).port().required(),
   EMAIL_USERNAME: Joi.string().required(),
   EMAIL_PASSWORD: Joi.string().required(),
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379).port(),
 });

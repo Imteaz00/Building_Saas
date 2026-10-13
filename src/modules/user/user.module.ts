@@ -14,6 +14,7 @@ import userConfig from './config/user.config';
 import { AuthService } from './services/auth.service';
 import { UAParserProvider } from '../../providers/uaparser.provider';
 import { JwtProvider } from 'src/providers/jwt.provider';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   controllers: [UserController],
@@ -28,7 +29,10 @@ import { JwtProvider } from 'src/providers/jwt.provider';
     TypeOrmModule.forFeature([User, Verification, UserSession]),
     CompanyModule,
     ConfigModule.forFeature(userConfig),
-    MailerModule,
+    BullModule.registerQueue({
+      name: 'notification-queue',
+    }),
   ],
+  exports: [UserService],
 })
 export class UserModule {}

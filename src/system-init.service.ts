@@ -3,6 +3,8 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Company } from './modules/company/company.entity';
 import { BcryptProvider } from './providers/bcrypt.provider';
+import { User } from './modules/user/entities/user.entity';
+import { DEFAULT_NOTIFICATION_TEMPLATES } from './constants/default-notification-templates';
 
 @Injectable()
 export class SystemInitService implements OnModuleInit {
@@ -22,10 +24,11 @@ export class SystemInitService implements OnModuleInit {
   private async seedInitialDataIfNeeded() {
     console.log('Check before seeding initial data...');
     let rootCompany: Company;
+    let superAdminUser: User;
 
     await this.dataSource.transaction(async (manager) => {
       try {
-        const upsertResult = await manager.upsert(
+        await manager.upsert(
           Company,
           {
             legalName: 'Default Company',
@@ -47,14 +50,13 @@ export class SystemInitService implements OnModuleInit {
         console.log('Upserted company:', rootCompany);
       } catch (error) {
         console.warn(
-          'Company already seeding or initialized by a concurrent replica.',
-          error,
+          'Company already seeded or initialized by a concurrent replica.',
         );
         return;
       }
       try {
         const passwordHash = await this.bcryptProvider.hashData('12345678');
-        const superAdminUser = manager.upsert(
+        await manager.upsert(
           'User',
           {
             name: 'Super Admin',
@@ -68,13 +70,32 @@ export class SystemInitService implements OnModuleInit {
           },
           ['email', 'company', 'username'],
         );
-        console.log('Seeded successfully');
+        superAdminUser = await manager.findOneByOrFail(User, {
+          username: 'super-admin',
+        });
+        console.log('User Seeded successfully');
       } catch (error) {
         console.warn(
-          'Super Admin user already seeding or initialized by a concurrent replica.',
-          error,
+          'Super Admin user already seeded or initialized by a concurrent replica.',
         );
         return;
+      }
+      try {
+        for (const template of DEFAULT_NOTIFICATION_TEMPLATES) {
+          await manager.upsert(
+            'notification_template',
+            {
+              ...template,
+              company: { id: rootCompany.id },
+            },
+            ['eventKey', 'channel', 'company'],
+          );
+        }
+      } catch (error) {
+        throw new Error(
+          'Failed to seed notification templates. Please check the error: ' +
+            error,
+        );
       }
     });
   }

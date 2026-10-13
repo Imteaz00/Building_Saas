@@ -1,5 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { ApiProperty } from '@nestjs/swagger';
+import { PartialType, ApiProperty, OmitType } from '@nestjs/swagger';
 import {
   IsIn,
   IsInt,
@@ -11,10 +10,6 @@ import {
 } from 'class-validator';
 
 export class BuildingDto {
-  @IsNotEmpty()
-  @IsUUID()
-  companyId: string;
-
   @IsNotEmpty()
   @IsString()
   @MaxLength(50)
@@ -85,4 +80,18 @@ export class BuildingResponseDto {
     default: 'active',
   })
   status: 'active' | 'inactive';
+
+  constructor(partial: Partial<BuildingResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class BuildingQueryDto extends PartialType(BuildingDto) {
+  @IsOptional()
+  @IsInt()
+  limit?: number;
+
+  @IsOptional()
+  @IsInt()
+  offset?: number;
 }
