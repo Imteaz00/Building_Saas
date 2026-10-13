@@ -28,6 +28,12 @@ export class NotificationConsumer extends WorkerHost {
         );
         break;
 
+      case 'setup-notification-templates':
+        await this.notificationService.setupNotificationTemplates(
+          job.data.companyId,
+        );
+        break;
+
       case 'send-notification':
         const data = job.data;
         const event = await this.eventRepository.save({

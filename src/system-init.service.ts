@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { Company } from './modules/company/company.entity';
 import { BcryptProvider } from './providers/bcrypt.provider';
 import { User } from './modules/user/entities/user.entity';
+import { DEFAULT_NOTIFICATION_TEMPLATES } from './constants/default-notification-templates';
 
 @Injectable()
 export class SystemInitService implements OnModuleInit {
@@ -80,29 +81,20 @@ export class SystemInitService implements OnModuleInit {
         return;
       }
       try {
-        const defaultNotificationTemplates = [
-          {
-            eventKey: 'user_verification',
-            channel: 'email',
-            subject: 'Verify Your Account',
-            body: 'Please verify your account using this token: {{token}}',
-          },
-        ];
-        for (const template of defaultNotificationTemplates) {
+        for (const template of DEFAULT_NOTIFICATION_TEMPLATES) {
           await manager.upsert(
-            'NotificationTemplate',
+            'notification_template',
             {
               ...template,
               company: { id: rootCompany.id },
-              createdBy: { id: superAdminUser.id },
             },
-            ['eventKey', 'channel'],
+            ['eventKey', 'channel', 'company'],
           );
         }
       } catch (error) {
-        console.error(
-          'Error occurred while seeding notification templates:',
-          error,
+        throw new Error(
+          'Failed to seed notification templates. Please check the error: ' +
+            error,
         );
       }
     });

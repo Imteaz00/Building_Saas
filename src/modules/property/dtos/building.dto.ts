@@ -1,5 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { ApiProperty } from '@nestjs/swagger';
+import { PartialType, ApiProperty, OmitType } from '@nestjs/swagger';
 import {
   IsIn,
   IsInt,
@@ -85,4 +84,20 @@ export class BuildingResponseDto {
     default: 'active',
   })
   status: 'active' | 'inactive';
+
+  constructor(partial: Partial<BuildingResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class BuildingQueryDto extends PartialType(
+  OmitType(BuildingDto, ['companyId']),
+) {
+  @IsOptional()
+  @IsInt()
+  limit?: number;
+
+  @IsOptional()
+  @IsInt()
+  offset?: number;
 }

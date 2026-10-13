@@ -90,3 +90,9 @@ All the notes while I build the backend will be here. Its to probably better to 
     - queue in bullmq with valkey
     - considered template, recipients, and preferances
     - logged even if was not sent marking undeliverable or suppressed
+
+
+26 sep
+- default notification template
+- create template
+- buildings, unit, charge creation and filtering

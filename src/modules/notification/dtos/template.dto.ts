@@ -1,12 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class NotificationTemplateDto {
   @IsString()
   eventKey: string;
 
-  @IsIn(['email', 'sms', 'push'])
-  channel: 'email' | 'sms' | 'push';
+  @IsIn(['email', 'sms', 'in-app'])
+  channel: 'email' | 'sms' | 'in-app';
 
   @IsString()
   @IsOptional()

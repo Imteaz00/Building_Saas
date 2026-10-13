@@ -9,7 +9,10 @@ import { In, Repository } from 'typeorm';
 import { NotificationTemplate } from './entities/template.entity';
 import { NotificationTemplateQueryParamsDto } from './dtos/template-query.dto';
 import { NotificationTemplateResponseDto } from './dtos/template-response.dto';
-import { UpdateNotificationTemplateDto } from './dtos/template.dto';
+import {
+  NotificationTemplateDto,
+  UpdateNotificationTemplateDto,
+} from './dtos/template.dto';
 import { UserService } from '../user/user.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import { NotificationEvent } from './entities/event.entity';
@@ -18,6 +21,7 @@ import { NotificationPreference } from './entities/preference.entity';
 import { NotificationDelivery } from './entities/delivery.entity';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ActiveUserType } from 'src/interfaces/active-user.interface';
 
 @Injectable()
 export class NotificationService {
@@ -40,8 +44,9 @@ export class NotificationService {
 
   async getAllTemplates(
     query: NotificationTemplateQueryParamsDto,
+    activeUser: ActiveUserType,
   ): Promise<NotificationTemplateResponseDto[]> {
-    const where: any = {};
+    const where: any = { where: { company: { id: activeUser.companyId } } };
     if (query.channel) where.channel = query.channel;
     if (query.eventKey) where.eventKey = query.eventKey;
 
@@ -58,9 +63,10 @@ export class NotificationService {
 
   async getTemplateById(
     templateId: string,
+    activeUser: ActiveUserType,
   ): Promise<NotificationTemplateResponseDto> {
     const template = await this.templateRepository.findOne({
-      where: { id: templateId },
+      where: { id: templateId, company: { id: activeUser.companyId } },
     });
     if (!template) {
       throw new NotFoundException(
@@ -76,12 +82,33 @@ export class NotificationService {
     };
   }
 
+  async createTemplate(
+    templateData: NotificationTemplateDto,
+    activeUser: ActiveUserType,
+  ): Promise<NotificationTemplateResponseDto> {
+    const newTemplate = this.templateRepository.create({
+      ...templateData,
+      company: { id: activeUser.companyId },
+    });
+    const savedTemplate = await this.templateRepository.save(newTemplate);
+    if (!savedTemplate) {
+      throw new Error('Failed to create notification template');
+    }
+    return {
+      id: savedTemplate.id,
+      channel: savedTemplate.channel,
+      eventKey: savedTemplate.eventKey,
+      subject: savedTemplate.subject,
+      body: savedTemplate.body,
+    };
+  }
   async updateTemplate(
     templateId: string,
     updateData: UpdateNotificationTemplateDto,
+    activeUser: ActiveUserType,
   ): Promise<NotificationTemplateResponseDto> {
     const template = await this.templateRepository.findOne({
-      where: { id: templateId },
+      where: { id: templateId, company: { id: activeUser.companyId } },
     });
     if (!template) {
       throw new NotFoundException(
@@ -92,6 +119,10 @@ export class NotificationService {
     template.subject = updateData.subject ?? template.subject;
     template.body = updateData.body ?? template.body;
     const updatedTemplate = await this.templateRepository.save(template);
+
+    if (!updatedTemplate) {
+      throw new Error('Failed to update notification template');
+    }
     return {
       id: updatedTemplate.id,
       channel: updatedTemplate.channel,
@@ -172,6 +203,7 @@ export class NotificationService {
         },
         eventCategory: event.eventKey,
       },
+      relations: { user: true },
     });
 
     const passiveDeliveries: Partial<NotificationDelivery>[] = [];
@@ -181,10 +213,9 @@ export class NotificationService {
         (pref) => pref.user.id === recipient.id,
       );
 
-      let status: NotificationDelivery['status'] = 'queued';
-      let address: string | null = null;
-
       for (const template of templates) {
+        let status: NotificationDelivery['status'] = 'queued';
+        let address: string | null = null;
         const preference = userPreferences.find(
           (pref) => pref.eventCategory === template.eventKey,
         );
@@ -251,7 +282,22 @@ export class NotificationService {
     }
   }
 
-  async sendMail() {}
-  async sendSMS() {}
-  async sendInAppNotification() {}
+  async setupNotificationTemplates(companyId: string): Promise<void> {
+    const defaultTemplates = await this.templateRepository.find({
+      where: { company: { slug: 'default-company' } },
+    });
+
+    const templatesToCreate = defaultTemplates.map((defaultTemplate) => ({
+      ...defaultTemplate,
+      company: { id: companyId },
+      id: undefined, // Ensure a new ID is generated
+    }));
+    const savedTemplates =
+      await this.templateRepository.save(templatesToCreate);
+    if (!savedTemplates || savedTemplates.length === 0) {
+      throw new Error(
+        'Failed to create notification templates for the company',
+      );
+    }
+  }
 }

@@ -110,11 +110,22 @@ export class UserService {
         },
       );
 
-      await this.notificationQueue.add('send-verification-email', {
-        userId: newUser.id,
-        token,
-        companyId: activeUser.companyId,
-      });
+      await this.notificationQueue.add(
+        'send-verification-email',
+        {
+          userId: newUser.id,
+          token,
+          companyId: activeUser.companyId,
+        },
+        {
+          delay: 1000,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        },
+      );
 
       return {
         id: newUser.id,
@@ -201,15 +212,24 @@ export class UserService {
         return result;
       });
 
+      if (result.affected === 0) {
+        throw new Error('Could not verify token');
+      }
+
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: { company: true },
       });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
       const { accessToken, accessTokenExpiresAt } =
         await this.jwtProvider.createAccessToken({
           sub: userId,
-          companyId: user?.company.id, //is there a better way to do this?
-          role: user?.role,
+          companyId: user.company.id, //is there a better way to do this?
+          role: user.role,
         });
 
       return { accessToken, accessTokenExpiresAt };

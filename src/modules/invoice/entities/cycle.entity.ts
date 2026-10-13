@@ -13,7 +13,10 @@ import {
 } from 'typeorm';
 
 @Entity()
-@Index(['lease', 'periodStart'], { unique: true })
+@Index(['lease', 'periodStart'], {
+  unique: true,
+  where: '"deleted_at" IS NULL',
+})
 export class BillingCycle {
   @PrimaryGeneratedColumn('uuid')
   id: string;

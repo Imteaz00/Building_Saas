@@ -38,9 +38,6 @@ export class NotificationTemplate {
 
   //version
 
-  @ManyToOne(() => User, { nullable: false })
-  createdBy: User;
-
   @ManyToOne(() => User)
   updatedBy: User | null;
 

@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -17,7 +16,6 @@ import { UpdateUserDto, UserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { VerifyTokenDto } from './dtos/verify-token.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { AuthorizeGuard } from 'src/guards/authorize.guard';
 import { LoginDto, LoginResponseDto } from './dtos/login.dto';
 import { AuthService } from './services/auth.service';
 import { AllowAnonymous } from 'src/decorators/allow-anonymous.decorator';

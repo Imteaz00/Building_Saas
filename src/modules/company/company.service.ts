@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 import { Company } from './company.entity';
 import { CompanyDto } from './dtos/company.dto';
@@ -14,6 +16,9 @@ import { CompanyResponseDto } from './dtos/company-response.dto';
 export class CompanyService {
   constructor(
     @InjectRepository(Company) private companyRepository: Repository<Company>,
+
+    @InjectQueue('create-notification-templates')
+    private readonly createNotificationTemplatesQueue: Queue,
   ) {}
 
   async createCompany(companyDto: CompanyDto): Promise<CompanyResponseDto> {
@@ -38,6 +43,12 @@ export class CompanyService {
       if (!newCompany) {
         throw new Error('Failed to create company');
       }
+      await this.createNotificationTemplatesQueue.add(
+        'setup-notification-templates',
+        {
+          companyId: newCompany.id,
+        },
+      );
       return {
         id: newCompany.id,
         legalName: newCompany.legalName,

@@ -1,5 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
 import {
   IsDateString,
   IsIn,
@@ -109,4 +108,20 @@ export class UnitResponseDto {
     required: false,
   })
   expectedReturnDate?: Date;
+
+  constructor(partial: Partial<UnitResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class UnitQueryDto extends PartialType(
+  OmitType(UnitDto, ['buildingId']),
+) {
+  @IsOptional()
+  @IsInt()
+  limit?: number;
+
+  @IsOptional()
+  @IsInt()
+  offset?: number;
 }

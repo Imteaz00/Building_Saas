@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-@Index(['company', 'type'], { unique: true })
+@Index(['company', 'type'], { unique: true, where: '"deleted_at" IS NULL' })
 export class NumberSequence {
   @PrimaryGeneratedColumn('uuid')
   id: string;

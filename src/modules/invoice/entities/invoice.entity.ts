@@ -14,7 +14,6 @@ import { Lease } from 'src/modules/tenant/entities/lease.entity';
 import { Tenant } from 'src/modules/tenant/entities/tenant.entity';
 
 @Entity()
-@Index(['lease', 'billingPeriodStart'], { unique: true })
 export class Invoice {
   @PrimaryGeneratedColumn('uuid')
   id: string;

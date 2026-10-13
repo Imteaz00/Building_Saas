@@ -16,11 +16,11 @@ export class InvoiceLine {
   @ManyToOne(() => Invoice, { nullable: false })
   invoice: Invoice;
 
-  @ManyToOne(() => LeaseChargeLine, { nullable: false })
-  source: LeaseChargeLine;
+  @ManyToOne(() => LeaseChargeLine, { nullable: true })
+  source?: LeaseChargeLine | null;
 
   @ManyToOne(() => InvoiceLine, { nullable: true })
-  related?: Invoice | null;
+  related?: InvoiceLine | null;
 
   @Column({ type: 'varchar', nullable: false, length: 20 })
   label: string;
@@ -59,13 +59,7 @@ export class InvoiceLine {
   })
   prorationDivisor?: number | null;
 
-  @Column({
-    name: 'sort_order',
-    type: 'decimal',
-    precision: 10,
-    scale: 2,
-    nullable: true,
-  })
+  @Column({ name: 'sort_order', type: 'int', nullable: false })
   sortOrder: number;
 
   @CreateDateColumn({ name: 'created_at' })
