@@ -106,11 +106,11 @@ export class PropertyService {
     const where: any = { building: { company: { id: activeUser.companyId } } };
     if (query.unitNumber) where.unitNumber = ILike(`%${query.unitNumber}%`);
     if (query.unitType) where.unitType = ILike(`%${query.unitType}%`);
-    if (query.floor) where.floor = query.floor;
-    if (query.size) where.size = query.size;
+    if (query.floor !== null) where.floor = query.floor;
+    if (query.size !== null) where.size = query.size;
     if (query.sizeUnit) where.sizeUnit = ILike(`%${query.sizeUnit}%`);
-    if (query.bedroomCount) where.bedroomCount = query.bedroomCount;
-    if (query.bathroomCount) where.bathroomCount = query.bathroomCount;
+    if (query.bedroomCount !== null) where.bedroomCount = query.bedroomCount;
+    if (query.bathroomCount !== null) where.bathroomCount = query.bathroomCount;
     if (query.occupancyStatus)
       where.occupancyStatus = ILike(`%${query.occupancyStatus}%`);
     if (query.unavailableReason)
@@ -118,7 +118,11 @@ export class PropertyService {
     if (query.expectedReturnDate)
       where.expectedReturnDate = query.expectedReturnDate;
 
-    const units = await this.unitRepository.find({ where });
+    const units = await this.unitRepository.find({
+      where,
+      take: query.limit ? query.limit : 10,
+      skip: query.offset ? query.offset : 0,
+    });
 
     return units.map((unit) => new UnitResponseDto(unit));
   }
@@ -130,7 +134,7 @@ export class PropertyService {
     const unit = await this.unitRepository.findOne({
       where: { id: defaultCharge.unitId },
       relations: { building: { company: true } },
-      select: { building: { company: { id: true } } },
+      select: { building: { company: true } },
     });
 
     if (!unit || unit.building.company.id !== activeUser.companyId) {

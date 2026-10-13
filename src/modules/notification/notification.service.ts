@@ -46,7 +46,7 @@ export class NotificationService {
     query: NotificationTemplateQueryParamsDto,
     activeUser: ActiveUserType,
   ): Promise<NotificationTemplateResponseDto[]> {
-    const where: any = { where: { company: { id: activeUser.companyId } } };
+    const where: any = { company: { id: activeUser.companyId } };
     if (query.channel) where.channel = query.channel;
     if (query.eventKey) where.eventKey = query.eventKey;
 
@@ -82,26 +82,27 @@ export class NotificationService {
     };
   }
 
-  async createTemplate(
-    templateData: NotificationTemplateDto,
-    activeUser: ActiveUserType,
-  ): Promise<NotificationTemplateResponseDto> {
-    const newTemplate = this.templateRepository.create({
-      ...templateData,
-      company: { id: activeUser.companyId },
-    });
-    const savedTemplate = await this.templateRepository.save(newTemplate);
-    if (!savedTemplate) {
-      throw new Error('Failed to create notification template');
-    }
-    return {
-      id: savedTemplate.id,
-      channel: savedTemplate.channel,
-      eventKey: savedTemplate.eventKey,
-      subject: savedTemplate.subject,
-      body: savedTemplate.body,
-    };
-  }
+  //   async createTemplate(
+  //     templateData: NotificationTemplateDto,
+  //     activeUser: ActiveUserType,
+  //   ): Promise<NotificationTemplateResponseDto> {
+  //     const newTemplate = this.templateRepository.create({
+  //       ...templateData,
+  //       company: { id: activeUser.companyId },
+  //     });
+  //     const savedTemplate = await this.templateRepository.save(newTemplate);
+  //     if (!savedTemplate) {
+  //       throw new Error('Failed to create notification template');
+  //     }
+  //     return {
+  //       id: savedTemplate.id,
+  //       channel: savedTemplate.channel,
+  //       eventKey: savedTemplate.eventKey,
+  //       subject: savedTemplate.subject,
+  //       body: savedTemplate.body,
+  //     };
+  //   }
+
   async updateTemplate(
     templateId: string,
     updateData: UpdateNotificationTemplateDto,

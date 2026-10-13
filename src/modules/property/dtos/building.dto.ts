@@ -11,10 +11,6 @@ import {
 
 export class BuildingDto {
   @IsNotEmpty()
-  @IsUUID()
-  companyId: string;
-
-  @IsNotEmpty()
   @IsString()
   @MaxLength(50)
   name: string;
@@ -90,9 +86,7 @@ export class BuildingResponseDto {
   }
 }
 
-export class BuildingQueryDto extends PartialType(
-  OmitType(BuildingDto, ['companyId']),
-) {
+export class BuildingQueryDto extends PartialType(BuildingDto) {
   @IsOptional()
   @IsInt()
   limit?: number;

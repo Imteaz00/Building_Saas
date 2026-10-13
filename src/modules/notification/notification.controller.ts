@@ -43,7 +43,7 @@ export class NotificationController {
     );
   }
 
-  @Patch('template/update')
+  @Patch('template/update/:templateId')
   @ApiBearerAuth('Authorization')
   @ApiOperation({ summary: 'Update a notification template by ID' })
   async updateTemplate(
