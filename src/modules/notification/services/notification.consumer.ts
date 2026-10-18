@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { NotificationService } from '../notification.service';
 import { NotificationEvent } from '../entities/event.entity';
+import { NOTIFICATION_EVENTS } from 'src/constants/contants';
 
 @Processor('notification-queue')
 export class NotificationConsumer extends WorkerHost {
@@ -18,8 +19,9 @@ export class NotificationConsumer extends WorkerHost {
   }
 
   async process(job: Job) {
+    let event: NotificationEvent;
     switch (job.name) {
-      case 'send-verification-email':
+      case NOTIFICATION_EVENTS.SEND_VERIFICATION_EMAIL:
         const { userId, token, companyId } = job.data;
         await this.notificationService.sendVerificationEmail(
           userId,
@@ -28,7 +30,7 @@ export class NotificationConsumer extends WorkerHost {
         );
         break;
 
-      case 'setup-notification-templates':
+      case NOTIFICATION_EVENTS.SETUP_TEMPLATES:
         await this.notificationService.setupNotificationTemplates(
           job.data.companyId,
         );
@@ -36,7 +38,7 @@ export class NotificationConsumer extends WorkerHost {
 
       case 'send-notification':
         const data = job.data;
-        const event = await this.eventRepository.save({
+        event = await this.eventRepository.save({
           company: { id: data.companyId },
           eventKey: data.eventKey,
           targetType: data.targetType,
@@ -46,6 +48,11 @@ export class NotificationConsumer extends WorkerHost {
         });
 
         await this.notificationService.configureNotification(event);
+        break;
+
+      case NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT:
+        event = await this.eventRepository.save(job.data);
+        await this.notificationService.sendBuildingAnnouncement(event);
         break;
 
       default:

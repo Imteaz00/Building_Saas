@@ -16,6 +16,7 @@ import {
   DefaultChargeResponseDto,
 } from './dtos/default-charge.dto';
 import { UnitDefaultCharge } from './entities/default-charge.entity';
+import { convertToResponseDto } from 'src/utils/responseDto';
 
 @Injectable()
 export class PropertyService {
@@ -42,7 +43,7 @@ export class PropertyService {
         throw new Error('Building could not be saved');
       }
 
-      return new BuildingResponseDto(savedBuilding);
+      return convertToResponseDto(BuildingResponseDto, savedBuilding);
     } catch (error) {
       throw error;
     }
@@ -69,7 +70,51 @@ export class PropertyService {
       skip: query.offset ? query.offset : 0,
     });
 
-    return buildings.map((building) => new BuildingResponseDto(building));
+    return buildings.map((building) =>
+      convertToResponseDto(BuildingResponseDto, building),
+    );
+  }
+
+  async checkCompanyBuildingsAssociation(
+    companyId: string,
+    buildingId: string[],
+  ): Promise<string[]> {
+    const results = await Promise.all(
+      buildingId.map((id) =>
+        this.buildingRepository.existsBy({
+          id,
+          company: { id: companyId },
+        }),
+      ),
+    );
+    return results
+      .map((result, index) => (result ? buildingId[index] : null))
+      .filter((id): id is string => !!id);
+  }
+
+  async getAllUnitsforBuilding(buildingId: string): Promise<UnitResponseDto[]> {
+    const units = await this.unitRepository.find({
+      where: { building: { id: buildingId } },
+    });
+    return units.map((unit) => convertToResponseDto(UnitResponseDto, unit));
+  }
+
+  async checkBuildingUnitsAssociation(
+    buildingId: string,
+    unitId: string[],
+  ): Promise<string[]> {
+    const results = await Promise.all(
+      unitId.map((id) =>
+        this.unitRepository.existsBy({
+          id,
+          building: { id: buildingId },
+        }),
+      ),
+    );
+
+    return results
+      .map((result, index) => (result ? unitId[index] : null))
+      .filter((id): id is string => !!id);
   }
 
   async addUnit(
@@ -93,7 +138,7 @@ export class PropertyService {
         throw new Error('Unit could not be saved');
       }
 
-      return new UnitResponseDto(savedUnit);
+      return convertToResponseDto(UnitResponseDto, savedUnit);
     } catch (error) {
       throw error;
     }
@@ -124,7 +169,7 @@ export class PropertyService {
       skip: query.offset ? query.offset : 0,
     });
 
-    return units.map((unit) => new UnitResponseDto(unit));
+    return units.map((unit) => convertToResponseDto(UnitResponseDto, unit));
   }
 
   async addDefaultCharge(
@@ -152,6 +197,6 @@ export class PropertyService {
       throw new Error('Default charge could not be saved');
     }
 
-    return new DefaultChargeResponseDto(savedDefaultCharge);
+    return convertToResponseDto(DefaultChargeResponseDto, savedDefaultCharge);
   }
 }

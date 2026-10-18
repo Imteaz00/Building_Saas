@@ -20,12 +20,6 @@ export class Lease {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Company, { nullable: false })
-  company: Company;
-
-  @ManyToOne(() => Building, { nullable: false })
-  building: Building;
-
   @ManyToOne(() => Unit, { nullable: false })
   unit: Unit;
 
@@ -81,11 +75,12 @@ export class Lease {
   status:
     'active' | 'draft' | 'expiring' | 'expired' | 'terminated' | 'renewed';
 
-  //   activatedAt: Date | null;
+  @Column({ name: 'activated_at', type: 'timestamp', nullable: true })
+  activatedAt: Date | null;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'activated_by' })
-  activatedBy: User;
+  activatedBy: User | null;
 
   @Column({ name: 'terminated_at', type: 'timestamp', nullable: true })
   terminatedAt: Date | null;

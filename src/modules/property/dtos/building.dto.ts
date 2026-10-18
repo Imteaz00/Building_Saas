@@ -1,11 +1,11 @@
-import { PartialType, ApiProperty, OmitType } from '@nestjs/swagger';
+import { PartialType, ApiProperty } from '@nestjs/swagger';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import {
   IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
 } from 'class-validator';
 
@@ -43,47 +43,54 @@ export class BuildingDto {
 
 export class UpdateBuildingDto extends PartialType(BuildingDto) {}
 
+@Exclude()
 export class BuildingResponseDto {
+  @Expose()
   @ApiProperty({ description: 'The unique identifier of the building' })
   id: string;
 
+  @Expose()
   @ApiProperty({ description: 'The unique identifier of the company' })
+  @Transform(({ obj }) => obj.company.id)
   companyId: string;
 
+  @Expose()
   @ApiProperty({ description: 'The name of the building' })
   name: string;
 
+  @Expose()
   @ApiProperty({ description: 'The address of the building' })
   address: string;
 
+  @Expose()
   @ApiProperty({ description: 'The type of the building', required: false })
   buildingType?: string;
 
+  @Expose()
   @ApiProperty({ description: 'The year the building was built' })
   yearBuilt: number;
 
+  @Expose()
   @ApiProperty({
     description: 'The number of floors in the building',
     required: false,
   })
   floorCount?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'Notes about the ownership of the building',
     required: false,
   })
   ownershipNotes?: string;
 
+  @Expose()
   @ApiProperty({
     description: 'The status of the building',
     enum: ['active', 'inactive'],
     default: 'active',
   })
   status: 'active' | 'inactive';
-
-  constructor(partial: Partial<BuildingResponseDto>) {
-    Object.assign(this, partial);
-  }
 }
 
 export class BuildingQueryDto extends PartialType(BuildingDto) {

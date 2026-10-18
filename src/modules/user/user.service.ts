@@ -14,22 +14,24 @@ import {
   EntityManager,
   MoreThan,
   IsNull,
+  In,
 } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
 import { User } from './entities/user.entity';
-import { UpdateUserDto, UserDto } from './dtos/user.dto';
+import { UpdateUserDto, UserDto, UserResponseDto } from './dtos/user.dto';
 import { BcryptProvider } from '../../providers/bcrypt.provider';
 import { CompanyService } from '../company/company.service';
 import { Verification } from './entities/verification.entity';
 import userConfig from './config/user.config';
 import { VerifyTokenDto } from 'src/modules/user/dtos/verify-token.dto';
-import { UserResponseDto } from 'src/modules/user/dtos/user-response.dto';
 import { ActiveUserType } from 'src/interfaces/active-user.interface';
 import { JwtProvider } from 'src/providers/jwt.provider';
 import { UserSession } from './entities/session.entity';
+import { convertToResponseDto } from 'src/utils/responseDto';
+import { NOTIFICATION_EVENTS } from 'src/constants/contants';
 
 @Injectable()
 export class UserService {
@@ -111,7 +113,7 @@ export class UserService {
       );
 
       await this.notificationQueue.add(
-        'send-verification-email',
+        NOTIFICATION_EVENTS.SEND_VERIFICATION_EMAIL,
         {
           userId: newUser.id,
           token,
@@ -127,12 +129,7 @@ export class UserService {
         },
       );
 
-      return {
-        id: newUser.id,
-        email: newUser.email,
-        phone: newUser.phone,
-        username: newUser.username,
-      };
+      return convertToResponseDto(UserResponseDto, newUser);
     } catch (error) {
       throw error;
     }
@@ -246,12 +243,7 @@ export class UserService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      return {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        username: user.username,
-      };
+      return convertToResponseDto(UserResponseDto, user);
     } catch (error) {
       throw error;
     }
@@ -346,18 +338,13 @@ export class UserService {
       if (!updatedUser) {
         throw new Error('Failed to update user');
       }
-      return {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        phone: updatedUser.phone,
-        username: updatedUser.username,
-      };
+      return convertToResponseDto(UserResponseDto, updatedUser);
     } catch (error) {
       throw error;
     }
   }
 
-  async getUserByUserName({
+  async getUserByUsername({
     username,
     company = false,
   }: {
@@ -373,5 +360,13 @@ export class UserService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getUsersByTenantIds(teanantIds: string[]): Promise<User[]> {
+    const users = await this.userRepository.find({
+      where: { tenant: { id: In(teanantIds) } },
+      relations: { tenant: true },
+    });
+    return users;
   }
 }

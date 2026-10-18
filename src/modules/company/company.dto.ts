@@ -1,4 +1,5 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { Exclude, Expose } from 'class-transformer';
 import {
   IsEmail,
   IsISO4217CurrencyCode,
@@ -65,3 +66,34 @@ export class CompanyDto {
 }
 
 export class UpdateCompanyDto extends PartialType(CompanyDto) {}
+
+@Exclude()
+export class CompanyResponseDto {
+  @Expose()
+  @ApiProperty({ description: 'The created company ID' })
+  id: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The legal name of the company' })
+  legalName: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The trading name of the company' })
+  tradingName: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The email of the company' })
+  email: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The phone number of the company' })
+  phone: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The logo of the company', required: false })
+  logo?: string | null;
+
+  @Expose()
+  @ApiProperty({ description: 'The slug of the company' })
+  slug: string;
+}

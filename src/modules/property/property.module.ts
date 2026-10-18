@@ -15,5 +15,6 @@ import { CompanyModule } from '../company/company.module';
   ],
   controllers: [PropertyController],
   providers: [PropertyService],
+  exports: [PropertyService],
 })
 export class PropertyModule {}

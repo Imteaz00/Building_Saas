@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { User } from '../../user/entities/user.entity';
+import { Tenant } from 'src/modules/tenant/entities/tenant.entity';
 
 @Entity('notification_preference')
 export class NotificationPreference {
@@ -17,9 +18,8 @@ export class NotificationPreference {
   @ManyToOne(() => User, { nullable: false })
   user: User;
 
-  //tenant id
-  //   @ManyToOne(() => Tenant, { nullable: true })
-  //   tenant?: Tenant | null;
+  @ManyToOne(() => Tenant, { nullable: true })
+  tenant?: Tenant | null;
 
   @Column({ name: 'event_category', type: 'varchar', nullable: false })
   eventCategory: string;

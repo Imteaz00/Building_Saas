@@ -12,6 +12,8 @@ import { NotificationService } from './notification.service';
 import { UserModule } from '../user/user.module';
 import { NotificationConsumer } from './services/notification.consumer';
 import { DeliveryQueueProcessor } from './services/delivery.queue';
+import { AnnouncementModule } from '../announcement/announcement.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { DeliveryQueueProcessor } from './services/delivery.queue';
       NotificationTemplate,
     ]),
     UserModule,
+    AnnouncementModule,
+    TenantModule,
     MailerModule,
     BullModule.registerQueue({
       name: 'notification-queue',

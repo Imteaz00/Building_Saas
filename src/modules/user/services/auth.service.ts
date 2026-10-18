@@ -29,7 +29,7 @@ export class AuthService {
   ) {}
 
   async login(LoginDto: LoginDto, req: Request): Promise<LoginResponseDto> {
-    const user = await this.userService.getUserByUserName({
+    const user = await this.userService.getUserByUsername({
       username: LoginDto.username,
       company: true,
     });

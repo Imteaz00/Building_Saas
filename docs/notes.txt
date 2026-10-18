@@ -96,3 +96,8 @@ All the notes while I build the backend will be here. Its to probably better to 
 - default notification template
 - create template
 - buildings, unit, charge creation and filtering
+
+18 oct
+- generalize delivery queue
+- announcement delivery system
+- retry notification
