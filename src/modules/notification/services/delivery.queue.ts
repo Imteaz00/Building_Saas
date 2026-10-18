@@ -46,6 +46,7 @@ export class DeliveryQueueProcessor extends WorkerHost {
         break;
       default:
         console.warn(`No handler for job name: ${job.name}`);
+        throw new UnrecoverableError(`No handler for job name: ${job.name}`);
     }
   }
 

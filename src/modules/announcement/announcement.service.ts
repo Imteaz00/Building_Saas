@@ -55,6 +55,11 @@ export class AnnouncementService {
         buildingId,
         announcement.units,
       );
+      if (units.length !== announcement.units.length) {
+        throw new BadRequestException(
+          'One or more units are not associated with the building',
+        );
+      }
     } else
       throw new BadRequestException('Invalid audience type or units provided');
 

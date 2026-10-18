@@ -15,11 +15,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Tenant } from 'src/modules/tenant/entities/tenant.entity';
 
 @Entity('notification_delivery')
-@Index(['event', 'recipient', 'tenant', 'channel'], { unique: true })
-@Check(
-  'tenant_or_recipient_check',
-  '("tenantId" IS NOT NULL) OR ("recipientId" IS NOT NULL)',
-)
+@Index(['event', 'recipient', 'tenant', 'channel'], { unique: true }) //check this
 export class NotificationDelivery {
   @PrimaryGeneratedColumn('uuid')
   id: string;

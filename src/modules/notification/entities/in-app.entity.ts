@@ -20,7 +20,7 @@ export class InAppNotification {
   @ManyToOne(() => NotificationEvent, { nullable: false })
   event: NotificationEvent;
 
-  @Column({ type: 'string', length: 255 })
+  @Column({ type: 'varchar', length: 255 })
   title: string;
 
   @Column({ type: 'text' })
@@ -28,7 +28,7 @@ export class InAppNotification {
 
   //link type and link id, need to know
 
-  @Column({ name: 'read_at', type: 'datetime', nullable: true })
+  @Column({ name: 'read_at', type: 'timestamp', nullable: true })
   readAt: Date | null;
 
   @CreateDateColumn({

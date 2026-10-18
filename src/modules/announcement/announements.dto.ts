@@ -48,11 +48,6 @@ export class AnnouncementResponseDto {
   id: string;
 
   @Expose()
-  @ApiProperty({ description: 'The unique identifier of the building' })
-  @Transform(({ obj }) => obj.building.id)
-  buildingId: string;
-
-  @Expose()
   @ApiProperty({ description: 'The title of the announcement' })
   title: string;
 

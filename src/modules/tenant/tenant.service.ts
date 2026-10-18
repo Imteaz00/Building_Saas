@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+
 import { TenantResponseDto } from './dtos/tenant.dt0';
 import { Tenant } from './entities/tenant.entity';
 import { Lease } from './entities/lease.entity';
@@ -23,6 +24,7 @@ export class TenantService {
         unit: { id: In(unitIds) },
         status: 'active',
       },
+      relations: { tenant: true },
     });
     const tenantIds = leases.map((lease) => lease.tenant.id);
     const tenants = await this.tenantRepository.find({

@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsDateString,
   IsIn,
@@ -66,11 +66,6 @@ export class UnitResponseDto {
   @Expose()
   @ApiProperty({ description: 'The unique identifier of the unit' })
   id: string;
-
-  @Expose()
-  @Transform(({ obj }) => obj.building.id)
-  @ApiProperty({ description: 'The unique identifier of the building' })
-  buildingId: string;
 
   @Expose()
   @ApiProperty({ description: 'The unit number' })

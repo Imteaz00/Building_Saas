@@ -24,7 +24,7 @@ import { ActiveUserType } from 'src/interfaces/active-user.interface';
 import { convertToResponseDto } from 'src/utils/responseDto';
 import { AnnouncementService } from '../announcement/announcement.service';
 import { TenantService } from '../tenant/tenant.service';
-import { DELIVERY_EVENTS } from 'src/constants/contants';
+import { DELIVERY_EVENTS, NOTIFICATION_EVENTS } from 'src/constants/contants';
 
 @Injectable()
 export class NotificationService {
@@ -299,35 +299,75 @@ export class NotificationService {
 
   async sendBuildingAnnouncement(event: NotificationEvent): Promise<void> {
     try {
+      const [emailTemplate, inAppTemplate] = await Promise.all([
+        this.templateRepository.findOne({
+          where: {
+            eventKey: NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT,
+            channel: DELIVERY_EVENTS.EMAIL,
+            company: { id: event.company.id },
+          },
+        }),
+        this.templateRepository.findOne({
+          where: {
+            eventKey: NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT,
+            company: { id: event.company.id },
+            channel: DELIVERY_EVENTS.IN_APP,
+          },
+        }),
+      ]);
+
+      if (!emailTemplate || !inAppTemplate) {
+        throw new NotFoundException('Failed to find notification templates');
+      }
+
       const announcement = await this.announcementService.getAnnouncementById(
         event.targetId,
       );
+      if (!announcement) {
+        throw new NotFoundException(
+          `Announcement with ID ${event.targetId} not found`,
+        );
+      }
+
       const tenants = await this.tenantService.getActiveTenantsByUnits(
         announcement.units,
       );
+      if (!tenants || tenants.length === 0) {
+        throw new NotFoundException(
+          'No active tenants found for the announcement units',
+        );
+      }
 
-      const tenantEmailDeliveries = tenants.map((tenant) =>
-        this.deliveryRepository.create({
-          event: { id: event.id },
-          tenant: { id: tenant.id },
-          recipientAddress: tenant.primaryEmail,
-          channel: DELIVERY_EVENTS.EMAIL,
-          status: 'queued',
-          attemptCount: 0,
-        }),
-      );
-      const savedTenantEmailDeliveries = await this.deliveryRepository.save(
-        tenantEmailDeliveries,
+      const tenantEmailDeliveries = await Promise.all(
+        tenants.map((tenant) =>
+          this.deliveryRepository
+            .upsert(
+              {
+                event: { id: event.id },
+                tenant: { id: tenant.id },
+                recipientAddress: tenant.primaryEmail,
+                channel: DELIVERY_EVENTS.EMAIL,
+                status: 'queued',
+                attemptCount: 0,
+                template: { id: emailTemplate.id },
+              },
+              {
+                conflictPaths: ['event', 'tenant', 'channel'],
+                returning: ['id'],
+              },
+            )
+            .then((result) => result.raw[0] as NotificationDelivery),
+        ),
       );
 
       await this.deliveryQueue.addBulk(
-        savedTenantEmailDeliveries.map((delivery) => ({
+        tenantEmailDeliveries.map((delivery) => ({
           name: DELIVERY_EVENTS.EMAIL,
           data: {
             deliveryId: delivery.id,
-            subject: event.payload.title,
-            body: event.payload.body,
-            payload: {},
+            subject: emailTemplate.subject,
+            body: emailTemplate.body,
+            payload: event.payload,
           },
         })),
       );
@@ -336,20 +376,27 @@ export class NotificationService {
         tenants.map((tenant) => tenant.id),
       );
 
-      const userInAppDeliveries = users.map((user) => {
-        const delivery = this.deliveryRepository.create({
-          event: { id: event.id },
-          recipient: { id: user.id },
-          tenant: { id: user.tenant?.id },
-          channel: DELIVERY_EVENTS.IN_APP,
-          status: 'queued',
-          attemptCount: 0,
-        });
-        return delivery;
-      });
-
-      const savedUserInAppDeliveries =
-        await this.deliveryRepository.save(userInAppDeliveries);
+      const userInAppDeliveries = await Promise.all(
+        users.map((user) => {
+          return this.deliveryRepository
+            .upsert(
+              {
+                event: { id: event.id },
+                recipient: { id: user.id },
+                tenant: { id: user.tenant?.id },
+                channel: DELIVERY_EVENTS.IN_APP,
+                status: 'queued',
+                attemptCount: 0,
+                template: { id: inAppTemplate.id },
+              },
+              {
+                conflictPaths: ['event', 'recipient', 'channel'],
+                returning: ['id'],
+              },
+            )
+            .then((result) => result.raw[0] as NotificationDelivery);
+        }),
+      );
 
       // call inapp cron job
 
@@ -363,41 +410,51 @@ export class NotificationService {
         relations: { user: true, tenant: true },
       });
 
-      const userEmailDeliveries = notificationPreferences.map((preference) => {
-        const delivery = this.deliveryRepository.create({
-          event: { id: event.id },
-          recipient: { id: preference.user.id },
-          tenant: { id: preference.tenant?.id },
-          recipientAddress: preference.user.email,
-          channel: DELIVERY_EVENTS.EMAIL,
-          status: 'queued',
-          attemptCount: 0,
-        });
-        return delivery;
-      });
-
-      const savedUserEmailDeliveries =
-        await this.deliveryRepository.save(userEmailDeliveries);
+      const userEmailDeliveries = await Promise.all(
+        notificationPreferences.map((preference) => {
+          return this.deliveryRepository
+            .upsert(
+              {
+                event: { id: event.id },
+                recipient: { id: preference.user.id },
+                tenant: { id: preference.tenant?.id },
+                recipientAddress: preference.user.email,
+                channel: DELIVERY_EVENTS.EMAIL,
+                status: 'queued',
+                attemptCount: 0,
+                template: { id: emailTemplate.id },
+              },
+              {
+                conflictPaths: ['event', 'recipient', 'channel'],
+                returning: ['id'],
+              },
+            )
+            .then((result) => result.raw[0] as NotificationDelivery);
+        }),
+      );
 
       await this.deliveryQueue.addBulk(
-        savedUserEmailDeliveries.map((delivery) => ({
+        userEmailDeliveries.map((delivery) => ({
           name: DELIVERY_EVENTS.EMAIL,
           data: {
             deliveryId: delivery.id,
-            subject: announcement.title,
-            body: announcement.body,
-            payload: {},
+            subject: emailTemplate.subject,
+            body: emailTemplate.body,
+            payload: event.payload,
           },
         })),
       );
     } catch (error) {
-      await this.deliveryRepository.save({
-        event,
-        channel: DELIVERY_EVENTS.IN_APP,
-        status: 'undeliverable',
-        failureReason: error instanceof Error ? error.message : String(error),
-        attemptCount: 0,
-      });
+      await this.deliveryRepository.upsert(
+        {
+          event: { id: event.id },
+          channel: DELIVERY_EVENTS.IN_APP,
+          status: 'undeliverable',
+          failureReason: error instanceof Error ? error.message : String(error),
+          attemptCount: 0,
+        },
+        ['event', 'channel'],
+      );
       throw error;
     }
   }
@@ -408,7 +465,7 @@ export class NotificationService {
   ): Promise<void> {
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: { event: true, template: true },
+      relations: { event: { company: true }, template: true },
     });
     if (!delivery || delivery.event.company.id !== activeUser.companyId) {
       throw new NotFoundException(
@@ -416,7 +473,7 @@ export class NotificationService {
       );
     }
 
-    this.deliveryQueue.add(delivery.channel, {
+    await this.deliveryQueue.add(delivery.channel, {
       deliveryId: delivery.id,
       subject: delivery.template?.subject,
       body: delivery.template?.body,
@@ -430,6 +487,7 @@ export class NotificationService {
   ): Promise<void> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
+      relations: { company: true },
     });
 
     if (!event || event.company.id !== activeUser.companyId) {
@@ -439,7 +497,7 @@ export class NotificationService {
     }
 
     switch (event.eventKey) {
-      case 'building_announcement':
+      case NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT:
         await this.sendBuildingAnnouncement(event);
         break;
       default:

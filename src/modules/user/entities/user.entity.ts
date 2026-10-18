@@ -5,7 +5,6 @@ import {
   Entity,
   Index,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -26,7 +25,7 @@ export class User {
   @ManyToOne(() => Company, { nullable: false })
   company: Company;
 
-  @OneToOne(() => Tenant, { nullable: true })
+  @ManyToOne(() => Tenant, { nullable: true })
   tenant?: Tenant | null;
 
   @Column({ type: 'varchar', nullable: false, length: 50 })
