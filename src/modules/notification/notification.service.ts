@@ -38,9 +38,6 @@ export class NotificationService {
     @InjectRepository(NotificationDelivery)
     private deliveryRepository: Repository<NotificationDelivery>,
 
-    @InjectRepository(NotificationEvent)
-    private eventRepository: Repository<NotificationEvent>,
-
     @InjectQueue('delivery-queue')
     private readonly deliveryQueue: Queue,
 
@@ -479,14 +476,16 @@ export class NotificationService {
       );
     }
 
-    switch (deliveries[0].event.eventKey) {
-      case NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT:
-        await this.sendBuildingAnnouncement(deliveries[0].event);
-        break;
-      default:
-        throw new NotFoundException(
-          `No retry logic defined for event key: ${deliveries[0].event.eventKey}`,
-        );
-    }
+    this.deliveryQueue.addBulk(
+      deliveries.map((delivery) => ({
+        name: delivery.channel,
+        data: {
+          deliveryId: delivery.id,
+          subject: delivery.template?.subject,
+          body: delivery.template?.body,
+          payload: delivery.event.payload,
+        },
+      })),
+    );
   }
 }
