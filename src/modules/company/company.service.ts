@@ -9,16 +9,17 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
 import { Company } from './company.entity';
-import { CompanyDto } from './dtos/company.dto';
-import { CompanyResponseDto } from './dtos/company-response.dto';
+import { CompanyDto, CompanyResponseDto } from './company.dto';
+import { convertToResponseDto } from 'src/utils/responseDto';
+import { NOTIFICATION_EVENTS } from 'src/constants/contants';
 
 @Injectable()
 export class CompanyService {
   constructor(
     @InjectRepository(Company) private companyRepository: Repository<Company>,
 
-    @InjectQueue('create-notification-templates')
-    private readonly createNotificationTemplatesQueue: Queue,
+    @InjectQueue('notification-queue')
+    private readonly notificationQueue: Queue,
   ) {}
 
   async createCompany(companyDto: CompanyDto): Promise<CompanyResponseDto> {
@@ -43,21 +44,10 @@ export class CompanyService {
       if (!newCompany) {
         throw new Error('Failed to create company');
       }
-      await this.createNotificationTemplatesQueue.add(
-        'setup-notification-templates',
-        {
-          companyId: newCompany.id,
-        },
-      );
-      return {
-        id: newCompany.id,
-        legalName: newCompany.legalName,
-        tradingName: newCompany.tradingName,
-        email: newCompany.email,
-        phone: newCompany.phone,
-        slug: newCompany.slug,
-        // logo: newCompany?.logo,
-      };
+      await this.notificationQueue.add(NOTIFICATION_EVENTS.SETUP_TEMPLATES, {
+        companyId: newCompany.id,
+      });
+      return convertToResponseDto(CompanyResponseDto, newCompany);
     } catch (error) {
       throw error;
     }
@@ -69,32 +59,20 @@ export class CompanyService {
       if (!company) {
         throw new NotFoundException('Company not found');
       }
-      return {
-        id: company.id,
-        legalName: company.legalName,
-        tradingName: company.tradingName,
-        email: company.email,
-        phone: company.phone,
-        slug: company.slug,
-        // logo: company?.logo,
-      };
+      return convertToResponseDto(CompanyResponseDto, company);
     } catch (error) {
       throw error;
     }
   }
 
-  async getCompanyIds(): Promise<
-    { id: string; legalName: string; tradingName: string }[]
-  > {
+  async getCompanyIds(): Promise<CompanyResponseDto[]> {
     try {
       const companies = await this.companyRepository.find({
         select: { id: true, legalName: true, tradingName: true },
       });
-      return companies.map((company) => ({
-        id: company.id,
-        legalName: company.legalName,
-        tradingName: company.tradingName,
-      }));
+      return companies.map((company) =>
+        convertToResponseDto(CompanyResponseDto, company),
+      );
     } catch (error) {
       throw error;
     }

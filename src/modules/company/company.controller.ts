@@ -9,8 +9,7 @@ import {
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 import { CompanyService } from './company.service';
-import { CompanyDto } from './dtos/company.dto';
-import { CompanyResponseDto } from './dtos/company-response.dto';
+import { CompanyDto, CompanyResponseDto } from './company.dto';
 
 @Controller('company')
 export class CompanyController {
@@ -25,13 +24,11 @@ export class CompanyController {
     return this.companyService.createCompany(companyDto);
   }
 
-  @Get('/get-all-ids')
+  @Get()
   @ApiOperation({
-    summary: 'Get IDs of all companies with legal names and trading names',
+    summary: 'Get all companies',
   })
-  async getCompaniesIds(): Promise<
-    { id: string; legalName: string; tradingName: string }[]
-  > {
+  async getCompaniesIds(): Promise<CompanyResponseDto[]> {
     return await this.companyService.getCompanyIds();
   }
 

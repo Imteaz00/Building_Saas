@@ -11,9 +11,10 @@ import {
 import { NotificationEvent } from './event.entity';
 import { NotificationTemplate } from './template.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { Tenant } from 'src/modules/tenant/entities/tenant.entity';
 
 @Entity('notification_delivery')
-@Index(['event', 'recipient', 'channel'], { unique: true })
+@Index(['event', 'recipient', 'tenant', 'channel'], { unique: true }) //check this
 export class NotificationDelivery {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,15 +22,16 @@ export class NotificationDelivery {
   @ManyToOne(() => NotificationEvent, { nullable: false })
   event: NotificationEvent;
 
-  @ManyToOne(() => NotificationTemplate, { nullable: false })
-  template: NotificationTemplate;
+  @ManyToOne(() => NotificationTemplate, { nullable: true })
+  template: NotificationTemplate | null;
 
   //version
 
-  @ManyToOne(() => User, { nullable: false })
-  recipient: User;
+  @ManyToOne(() => User, { nullable: true })
+  recipient: User | null;
 
-  //recipient tenant
+  @ManyToOne(() => Tenant, { nullable: true })
+  tenant: Tenant | null;
 
   @Column({ name: 'recipient_address', type: 'varchar', nullable: true })
   recipientAddress?: string | null;
@@ -52,7 +54,7 @@ export class NotificationDelivery {
   status:
     'queued' | 'sent' | 'failed' | 'undeliverable' | 'suppressed' | 'skipped';
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'failure_reason', type: 'text', nullable: true })
   failureReason?: string | null;
 
   @Column({ name: 'attempt_count', type: 'int', nullable: false, default: 0 })

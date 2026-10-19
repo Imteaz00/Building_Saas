@@ -1,4 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { ApiProperty } from '@nestjs/swagger';
+import { Exclude, Expose } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -10,10 +12,6 @@ import {
 } from 'class-validator';
 
 export class UserDto {
-  @IsOptional()
-  @IsUUID()
-  companyId?: string;
-
   @IsUUID()
   @IsOptional()
   tenantId?: string;
@@ -46,3 +44,22 @@ export class UserDto {
 }
 
 export class UpdateUserDto extends PartialType(UserDto) {}
+
+@Exclude()
+export class UserResponseDto {
+  @Expose()
+  @ApiProperty({ description: 'The created user' })
+  id: string;
+
+  @Expose()
+  @ApiProperty({ description: "The user's email" })
+  email: string;
+
+  @Expose()
+  @ApiProperty({ description: "The user's phone number" })
+  phone?: string | null;
+
+  @Expose()
+  @ApiProperty({ description: 'The user username' })
+  username: string;
+}

@@ -12,6 +12,7 @@ import { Exclude } from 'class-transformer';
 
 import { Company } from '../../company/company.entity';
 import { UserSession } from './session.entity';
+import { Tenant } from 'src/modules/tenant/entities/tenant.entity';
 
 @Entity()
 @Index(['email', 'company'], { unique: true, where: 'deleted_at IS NULL' })
@@ -21,9 +22,11 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Company, (company) => company.users, { nullable: false })
+  @ManyToOne(() => Company, { nullable: false })
   company: Company;
-  //   tenant_id
+
+  @ManyToOne(() => Tenant, { nullable: true })
+  tenant?: Tenant | null;
 
   @Column({ type: 'varchar', nullable: false, length: 50 })
   name: string;

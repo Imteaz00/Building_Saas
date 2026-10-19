@@ -8,9 +8,8 @@ import { In, Repository } from 'typeorm';
 
 import { NotificationTemplate } from './entities/template.entity';
 import { NotificationTemplateQueryParamsDto } from './dtos/template-query.dto';
-import { NotificationTemplateResponseDto } from './dtos/template-response.dto';
 import {
-  NotificationTemplateDto,
+  NotificationTemplateResponseDto,
   UpdateNotificationTemplateDto,
 } from './dtos/template.dto';
 import { UserService } from '../user/user.service';
@@ -22,6 +21,10 @@ import { NotificationDelivery } from './entities/delivery.entity';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ActiveUserType } from 'src/interfaces/active-user.interface';
+import { convertToResponseDto } from 'src/utils/responseDto';
+import { AnnouncementService } from '../announcement/announcement.service';
+import { TenantService } from '../tenant/tenant.service';
+import { DELIVERY_EVENTS, NOTIFICATION_EVENTS } from 'src/constants/contants';
 
 @Injectable()
 export class NotificationService {
@@ -40,6 +43,8 @@ export class NotificationService {
 
     private readonly userService: UserService,
     private readonly mailerService: MailerService,
+    private readonly announcementService: AnnouncementService,
+    private readonly tenantService: TenantService,
   ) {}
 
   async getAllTemplates(
@@ -52,13 +57,9 @@ export class NotificationService {
 
     const templates = await this.templateRepository.find({ where });
 
-    return templates.map((template) => ({
-      id: template.id,
-      channel: template.channel,
-      eventKey: template.eventKey,
-      subject: template.subject,
-      body: template.body,
-    }));
+    return templates.map((template) =>
+      convertToResponseDto(NotificationTemplateResponseDto, template),
+    );
   }
 
   async getTemplateById(
@@ -73,13 +74,7 @@ export class NotificationService {
         `Notification template with ID ${templateId} not found`,
       );
     }
-    return {
-      id: template.id,
-      channel: template.channel,
-      eventKey: template.eventKey,
-      subject: template.subject,
-      body: template.body,
-    };
+    return convertToResponseDto(NotificationTemplateResponseDto, template);
   }
 
   //   async createTemplate(
@@ -124,13 +119,10 @@ export class NotificationService {
     if (!updatedTemplate) {
       throw new Error('Failed to update notification template');
     }
-    return {
-      id: updatedTemplate.id,
-      channel: updatedTemplate.channel,
-      eventKey: updatedTemplate.eventKey,
-      subject: updatedTemplate.subject,
-      body: updatedTemplate.body,
-    };
+    return convertToResponseDto(
+      NotificationTemplateResponseDto,
+      updatedTemplate,
+    );
   }
 
   async sendVerificationEmail(
@@ -300,5 +292,200 @@ export class NotificationService {
         'Failed to create notification templates for the company',
       );
     }
+  }
+
+  async sendBuildingAnnouncement(event: NotificationEvent): Promise<void> {
+    try {
+      const [emailTemplate, inAppTemplate] = await Promise.all([
+        this.templateRepository.findOne({
+          where: {
+            eventKey: NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT,
+            channel: DELIVERY_EVENTS.EMAIL,
+            company: { id: event.company.id },
+          },
+        }),
+        this.templateRepository.findOne({
+          where: {
+            eventKey: NOTIFICATION_EVENTS.BUILDING_ANNOUNCEMENT,
+            company: { id: event.company.id },
+            channel: DELIVERY_EVENTS.IN_APP,
+          },
+        }),
+      ]);
+
+      if (!emailTemplate || !inAppTemplate) {
+        throw new NotFoundException('Failed to find notification templates');
+      }
+
+      const announcement = await this.announcementService.getAnnouncementById(
+        event.targetId,
+      );
+      if (!announcement) {
+        throw new NotFoundException(
+          `Announcement with ID ${event.targetId} not found`,
+        );
+      }
+
+      const tenants = await this.tenantService.getActiveTenantsByUnits(
+        announcement.units,
+      );
+      if (!tenants || tenants.length === 0) {
+        throw new NotFoundException(
+          'No active tenants found for the announcement units',
+        );
+      }
+
+      const tenantEmailDeliveries = tenants.map((tenant) =>
+        this.deliveryRepository.create({
+          event: { id: event.id },
+          tenant: { id: tenant.id },
+          recipientAddress: tenant.primaryEmail,
+          channel: DELIVERY_EVENTS.EMAIL,
+          status: 'queued',
+          attemptCount: 0,
+          template: { id: emailTemplate.id },
+        }),
+      );
+
+      const savedTenantEmailDeliveries = await this.deliveryRepository.save(
+        tenantEmailDeliveries,
+      );
+
+      await this.deliveryQueue.addBulk(
+        savedTenantEmailDeliveries.map((delivery) => ({
+          name: DELIVERY_EVENTS.EMAIL,
+          data: {
+            deliveryId: delivery.id,
+            subject: emailTemplate.subject,
+            body: emailTemplate.body,
+            payload: event.payload,
+          },
+        })),
+      );
+
+      const users = await this.userService.getUsersByTenantIds(
+        tenants.map((tenant) => tenant.id),
+      );
+
+      const userInAppDeliveries = users.map((user) => {
+        return this.deliveryRepository.create({
+          event: { id: event.id },
+          recipient: { id: user.id },
+          tenant: { id: user.tenant?.id },
+          channel: DELIVERY_EVENTS.IN_APP,
+          status: 'queued',
+          attemptCount: 0,
+          template: { id: inAppTemplate.id },
+        });
+      });
+
+      const savedUserInAppDeliveries =
+        await this.deliveryRepository.save(userInAppDeliveries);
+
+      // call inapp cron job
+
+      const notificationPreferences = await this.preferenceRepository.find({
+        where: {
+          user: { id: In(users.map((user) => user.id)) },
+          tenant: { id: In(tenants.map((tenant) => tenant.id)) },
+          channel: DELIVERY_EVENTS.EMAIL,
+          enabled: true,
+        },
+        relations: { user: true, tenant: true },
+      });
+
+      const userEmailDeliveries = notificationPreferences.map((preference) => {
+        return this.deliveryRepository.create({
+          event: { id: event.id },
+          recipient: { id: preference.user.id },
+          tenant: { id: preference.tenant?.id },
+          recipientAddress: preference.user.email,
+          channel: DELIVERY_EVENTS.EMAIL,
+          status: 'queued',
+          attemptCount: 0,
+          template: { id: emailTemplate.id },
+        });
+      });
+
+      const savedUserEmailDeliveries =
+        await this.deliveryRepository.save(userEmailDeliveries);
+
+      await this.deliveryQueue.addBulk(
+        savedUserEmailDeliveries.map((delivery) => ({
+          name: DELIVERY_EVENTS.EMAIL,
+          data: {
+            deliveryId: delivery.id,
+            subject: emailTemplate.subject,
+            body: emailTemplate.body,
+            payload: event.payload,
+          },
+        })),
+      );
+    } catch (error) {
+      await this.deliveryRepository.upsert(
+        {
+          event: { id: event.id },
+          channel: DELIVERY_EVENTS.IN_APP,
+          status: 'undeliverable',
+          failureReason: error instanceof Error ? error.message : String(error),
+          attemptCount: 0,
+        },
+        ['event', 'channel'],
+      );
+      throw error;
+    }
+  }
+
+  async retryDelivery(
+    deliveryId: string,
+    activeUser: ActiveUserType,
+  ): Promise<void> {
+    const delivery = await this.deliveryRepository.findOne({
+      where: { id: deliveryId },
+      relations: { event: { company: true }, template: true },
+    });
+    if (!delivery || delivery.event.company.id !== activeUser.companyId) {
+      throw new NotFoundException(
+        `Notification delivery with ID ${deliveryId} not found`,
+      );
+    }
+
+    await this.deliveryQueue.add(delivery.channel, {
+      deliveryId: delivery.id,
+      subject: delivery.template?.subject,
+      body: delivery.template?.body,
+      payload: delivery.event.payload,
+    });
+  }
+
+  async retryEventDeliveries(
+    eventId: string,
+    activeUser: ActiveUserType,
+  ): Promise<void> {
+    const deliveries = await this.deliveryRepository.find({
+      where: {
+        event: { id: eventId, company: { id: activeUser.companyId } },
+        status: 'failed',
+      },
+      relations: { event: true, template: true },
+    });
+
+    if (!deliveries || deliveries.length === 0) {
+      throw new NotFoundException(
+        `No failed notification deliveries found for event ID ${eventId}`,
+      );
+    }
+
+    this.deliveryQueue.addBulk(
+      deliveries.map((delivery) => ({
+        name: delivery.channel,
+        data: {
+          deliveryId: delivery.id,
+          subject: delivery.template?.subject,
+          body: delivery.template?.body,
+          payload: delivery.event.payload,
+        },
+      })),
+    );
   }
 }

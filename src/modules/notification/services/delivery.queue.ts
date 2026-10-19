@@ -1,11 +1,11 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
-import { NotAcceptableException, NotFoundException } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Job, UnrecoverableError } from 'bullmq';
 import { Repository } from 'typeorm';
 
 import { NotificationDelivery } from '../entities/delivery.entity';
 import { MailerService } from '@nestjs-modules/mailer';
+import { DELIVERY_EVENTS } from 'src/constants/contants';
 
 @Processor('delivery-queue')
 export class DeliveryQueueProcessor extends WorkerHost {
@@ -18,88 +18,71 @@ export class DeliveryQueueProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ deliveryId: string; channel: string }>) {
+  async process(
+    job: Job<{
+      deliveryId: string;
+      subject: string;
+      body: string;
+      payload: Record<string, any>;
+    }>,
+  ) {
     switch (job.name) {
-      case 'process-delivery':
-        const delivery = await this.deliveryRepository.findOne({
-          where: { id: job.data.deliveryId },
-          relations: { template: true, event: true },
+      case DELIVERY_EVENTS.EMAIL:
+        const emailDelivery = await this.deliveryRepository.findOne({
+          where: { id: job.data.deliveryId, channel: 'email' },
         });
-        if (!delivery) {
-          throw new NotFoundException(
-            `Delivery with ID ${job.data.deliveryId} not found`,
+        if (!emailDelivery) {
+          throw new UnrecoverableError(
+            `Email delivery with id ${job.data.deliveryId} not found`,
           );
         }
 
-        try {
-          await this.deliver({ delivery, channel: job.data.channel });
-          delivery.status = 'sent';
-          await this.deliveryRepository.save(delivery);
-          return { success: true, message: 'Delivery processed successfully' };
-        } catch (error: any) {
-          delivery.status = 'failed';
-          delivery.failureReason = error.message || 'Unknown error';
-          delivery.attemptCount = job.attemptsMade;
-          await this.deliveryRepository.save(delivery);
-          throw error;
-        }
-
+        await this.sendEmail(
+          emailDelivery,
+          job.data.subject,
+          job.data.body,
+          job.data.payload,
+        );
+        break;
       default:
         console.warn(`No handler for job name: ${job.name}`);
+        throw new UnrecoverableError(`No handler for job name: ${job.name}`);
     }
   }
 
-  async deliver({
-    delivery,
-    channel,
-  }: {
-    delivery: NotificationDelivery;
-    channel: string;
-  }) {
-    switch (channel) {
-      case 'email':
-        this.sendEmail(delivery);
-        break;
-
-      case 'sms':
-        this.sendSMS();
-        break;
-
-      case 'in-app':
-        this.sendInAppNotification();
-        break;
-
-      default:
-        console.warn(`Unknown delivery channel: ${channel}`);
+  async sendEmail(
+    delivery: NotificationDelivery,
+    subject: string,
+    body: string,
+    payload: Record<string, any>,
+  ) {
+    if (!delivery.recipientAddress || !subject || !body || !payload) {
+      throw new UnrecoverableError('Recipient address is missing');
     }
-  }
 
-  async sendEmail(delivery: NotificationDelivery) {
-    try {
-      if (!delivery.recipientAddress) {
-        throw new NotAcceptableException(
-          `Recipient address for delivery ID ${delivery.id} not found`,
-        );
-      }
-      if (!delivery.template?.subject) {
-        throw new NotAcceptableException(
-          `Template for delivery ID ${delivery.id} not found`,
-        );
-      }
+    // compile body with payload
+    const compiledBody = body.replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, key) =>
+      String(payload[key] ?? match),
+    );
 
-      // compile body with payload
-      const compiledBody = delivery.template.body.replace(
-        /\{\{\s*([\w-]+)\s*\}\}/g,
-        (match, key) => String(delivery.event.payload?.[key] ?? match),
-      );
+    const compiledSubject = subject.replace(
+      /\{\{\s*([\w-]+)\s*\}\}/g,
+      (match, key) => String(payload[key] ?? match),
+    );
 
-      await this.mailerService.sendMail({
-        to: delivery.recipientAddress,
-        subject: delivery.template.subject,
-        html: compiledBody,
-      });
-    } catch (error) {
-      throw error;
+    const mailResult = await this.mailerService.sendMail({
+      to: delivery.recipientAddress,
+      subject: compiledSubject,
+      html: compiledBody,
+    });
+
+    //throw error if mailResult is not successful
+    if (
+      !mailResult ||
+      !mailResult.accepted ||
+      mailResult.accepted.length === 0
+    ) {
+      throw new Error('Failed to send email');
     }
   }
 
@@ -108,5 +91,28 @@ export class DeliveryQueueProcessor extends WorkerHost {
   }
   async sendInAppNotification() {
     console.log('Sending in-app notification...');
+  }
+
+  @OnWorkerEvent('completed')
+  async onCompleted(job: Job) {
+    await this.deliveryRepository.update(job.data.deliveryId, {
+      status: 'sent',
+    });
+  }
+
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job, error: Error) {
+    await this.deliveryRepository.update(job.data.deliveryId, {
+      status: 'failed',
+      failureReason: error.message,
+    });
+  }
+
+  @OnWorkerEvent('active')
+  async onAdded(job: Job) {
+    await this.deliveryRepository.update(job.data.deliveryId, {
+      attemptCount: job.attemptsMade,
+      lastAttemptAt: new Date(),
+    });
   }
 }

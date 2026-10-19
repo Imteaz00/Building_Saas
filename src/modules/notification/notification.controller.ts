@@ -10,8 +10,10 @@ import {
 
 import { NotificationService } from './notification.service';
 import { NotificationTemplateQueryParamsDto } from './dtos/template-query.dto';
-import { NotificationTemplateResponseDto } from './dtos/template-response.dto';
-import { UpdateNotificationTemplateDto } from './dtos/template.dto';
+import {
+  UpdateNotificationTemplateDto,
+  NotificationTemplateResponseDto,
+} from './dtos/template.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ActiveUser } from 'src/decorators/active-user.decorator';
 import type { ActiveUserType } from 'src/interfaces/active-user.interface';
@@ -54,6 +56,31 @@ export class NotificationController {
     return await this.notificationService.updateTemplate(
       templateId,
       updateTemplateDto,
+      activeUser,
+    );
+  }
+
+  @Get('retry-delivery/:deliveryId')
+  @ApiBearerAuth('Authorization')
+  @ApiOperation({ summary: 'Retry a notification delivery by ID' })
+  async retryDelivery(
+    @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
+    @ActiveUser() activeUser: ActiveUserType,
+  ): Promise<void> {
+    return await this.notificationService.retryDelivery(deliveryId, activeUser);
+  }
+
+  @Get('retry-event/:eventId')
+  @ApiBearerAuth('Authorization')
+  @ApiOperation({
+    summary: 'Retry all notification deliveries for an event by ID',
+  })
+  async retryEventDeliveries(
+    @Param('eventId', ParseUUIDPipe) eventId: string,
+    @ActiveUser() activeUser: ActiveUserType,
+  ): Promise<void> {
+    return await this.notificationService.retryEventDeliveries(
+      eventId,
       activeUser,
     );
   }

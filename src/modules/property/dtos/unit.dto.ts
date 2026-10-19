@@ -1,4 +1,5 @@
 import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsDateString,
   IsIn,
@@ -7,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class UnitDto {
@@ -38,7 +40,7 @@ export class UnitDto {
   @IsInt()
   bedroomCount?: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsInt()
   bathroomCount?: number;
 
@@ -55,73 +57,84 @@ export class UnitDto {
   expectedReturnDate?: Date;
 }
 
-export class UpdateUnitDto extends PartialType(UnitDto) {}
+export class UpdateUnitDto extends PartialType(
+  OmitType(UnitDto, ['buildingId'] as const),
+) {}
 
+@Exclude()
 export class UnitResponseDto {
+  @Expose()
   @ApiProperty({ description: 'The unique identifier of the unit' })
   id: string;
 
-  @ApiProperty({ description: 'The unique identifier of the building' })
-  buildingId: string;
-
+  @Expose()
   @ApiProperty({ description: 'The unit number' })
   unitNumber: string;
 
+  @Expose()
   @ApiProperty({ description: 'The type of the unit' })
   unitType: 'apartment' | 'commercial' | 'parking' | 'common_area';
 
+  @Expose()
   @ApiProperty({ description: 'The floor number of the unit' })
   floor: number;
 
+  @Expose()
   @ApiProperty({ description: 'The size of the unit' })
   size: number;
 
+  @Expose()
   @ApiProperty({ description: 'The unit of measurement for the size' })
   sizeUnit: 'sqft' | 'sqm';
 
+  @Expose()
   @ApiProperty({
     description: 'The number of bedrooms in the unit',
     required: false,
   })
   bedroomCount?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'The number of bathrooms in the unit',
     required: false,
   })
   bathroomCount?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'The occupancy status of the unit',
     required: false,
   })
   occupancyStatus?: 'occupied' | 'vacant' | 'reserved' | 'unavailable';
 
+  @Expose()
   @ApiProperty({
     description: 'The reason for the unit being unavailable',
     required: false,
   })
   unavailableReason?: string;
 
+  @Expose()
   @ApiProperty({
     description: 'The expected return date of the unit',
     required: false,
   })
   expectedReturnDate?: Date;
-
-  constructor(partial: Partial<UnitResponseDto>) {
-    Object.assign(this, partial);
-  }
 }
 
 export class UnitQueryDto extends PartialType(
   OmitType(UnitDto, ['buildingId']),
 ) {
+  @Type(() => Number)
   @IsOptional()
   @IsInt()
+  @Min(0)
   limit?: number;
 
+  @Type(() => Number)
   @IsOptional()
   @IsInt()
+  @Min(0)
   offset?: number;
 }
