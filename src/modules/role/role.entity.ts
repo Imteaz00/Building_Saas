@@ -3,35 +3,30 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Company } from '../company/company.entity';
+import { User } from '../user/entities/user.entity';
+import { Building } from '../property/entities/building.entity';
 
 @Entity()
-@Index(['name', 'module', 'action'], {
-  unique: true,
-  where: 'deleted_at IS NULL',
-})
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ManyToOne(() => Company, { nullable: false })
+  company: Company;
+
+  @ManyToOne(() => Building, { nullable: true })
+  building?: Building | null;
+
+  @ManyToOne(() => User, { nullable: false })
+  user: User;
+
   @Column({ type: 'varchar', nullable: false, length: 10 })
   name: string;
-
-  @Column({ type: 'varchar', nullable: false, length: 20 })
-  module: string;
-
-  @Column({
-    type: 'enum',
-    enum: ['view', 'create', 'edit', 'delete', 'approve'],
-    nullable: false,
-  })
-  action: 'view' | 'create' | 'edit' | 'delete' | 'approve';
-
-  @Column({ type: 'enum', enum: ['F', 'E', 'V', 'O'], nullable: true })
-  type: 'F' | 'E' | 'V' | 'O' | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

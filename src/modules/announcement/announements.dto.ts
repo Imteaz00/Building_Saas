@@ -9,6 +9,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { Unit } from '../property/entities/unit.entity';
 
 export class AnnouncementDto {
   @IsUUID()
@@ -46,6 +47,15 @@ export class AnnouncementResponseDto {
   @Expose()
   @ApiProperty({ description: 'The unique identifier of the announcement' })
   id: string;
+
+  @Expose()
+  @ApiProperty({
+    description:
+      'The unique identifier of the building associated with the announcement',
+    required: false,
+  })
+  @Transform(({ obj }) => obj.building?.id)
+  buildingId?: string;
 
   @Expose()
   @ApiProperty({ description: 'The title of the announcement' })
@@ -113,6 +123,6 @@ export class AnnouncementResponseDto {
     description: 'List of units associated with the announcement',
     required: false,
   })
-  @Transform(({ obj }) => obj.units?.map((unit) => unit.id))
-  units: string[];
+  @Transform(({ obj }) => obj.units?.map((unit: Unit) => unit.id))
+  units?: string[];
 }

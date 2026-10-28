@@ -14,6 +14,7 @@ import { NotificationConsumer } from './services/notification.consumer';
 import { DeliveryQueueProcessor } from './services/delivery.queue';
 import { AnnouncementModule } from '../announcement/announcement.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { InAppNotification } from './entities/in-app.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TenantModule } from '../tenant/tenant.module';
       NotificationDelivery,
       NotificationEvent,
       NotificationTemplate,
+      InAppNotification,
     ]),
     UserModule,
     AnnouncementModule,

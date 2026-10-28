@@ -76,17 +76,17 @@ export class Lease {
     'active' | 'draft' | 'expiring' | 'expired' | 'terminated' | 'renewed';
 
   @Column({ name: 'activated_at', type: 'timestamp', nullable: true })
-  activatedAt: Date | null;
+  activatedAt?: Date | null;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'activated_by' })
-  activatedBy: User | null;
+  activatedBy?: User | null;
 
   @Column({ name: 'terminated_at', type: 'timestamp', nullable: true })
-  terminatedAt: Date | null;
+  terminatedAt?: Date | null;
 
   @Column({ name: 'termination_reason', type: 'varchar', nullable: true })
-  terminationReason: string | null;
+  terminationReason?: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -79,17 +79,14 @@ export class PropertyService {
     companyId: string,
     buildingId: string[],
   ): Promise<string[]> {
-    const results = await Promise.all(
-      buildingId.map((id) =>
-        this.buildingRepository.existsBy({
-          id,
-          company: { id: companyId },
-        }),
-      ),
-    );
-    return results
-      .map((result, index) => (result ? buildingId[index] : null))
-      .filter((id): id is string => !!id);
+    const buildings = await this.buildingRepository.find({
+      where: {
+        id: In(buildingId),
+        company: { id: companyId },
+      },
+      select: { id: true },
+    });
+    return buildings.map((building) => building.id);
   }
 
   async getAllUnitsforBuilding(buildingId: string): Promise<UnitResponseDto[]> {
@@ -103,18 +100,14 @@ export class PropertyService {
     buildingId: string,
     unitId: string[],
   ): Promise<string[]> {
-    const results = await Promise.all(
-      unitId.map((id) =>
-        this.unitRepository.existsBy({
-          id,
-          building: { id: buildingId },
-        }),
-      ),
-    );
-
-    return results
-      .map((result, index) => (result ? unitId[index] : null))
-      .filter((id): id is string => !!id);
+    const units = await this.unitRepository.find({
+      where: {
+        id: In(unitId),
+        building: { id: buildingId },
+      },
+      select: { id: true },
+    });
+    return units.map((unit) => unit.id);
   }
 
   async addUnit(
@@ -198,5 +191,19 @@ export class PropertyService {
     }
 
     return convertToResponseDto(DefaultChargeResponseDto, savedDefaultCharge);
+  }
+
+  //check if unit/units exists in the company
+  async checkCompanyUnitsAssociation(
+    companyId: string,
+    unitIds: string[],
+  ): Promise<string[]> {
+    const units = await this.unitRepository.find({
+      where: {
+        id: In(unitIds),
+        building: { company: { id: companyId } },
+      },
+    });
+    return units.map((unit) => unit.id);
   }
 }
