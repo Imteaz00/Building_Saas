@@ -1,5 +1,6 @@
 import {
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -9,6 +10,7 @@ import {
 import { User } from 'src/modules/user/entities/user.entity';
 import { Permission } from './permission.entity';
 import { Company } from 'src/modules/company/company.entity';
+import { Delete } from '@nestjs/common';
 
 @Entity()
 export class UserPermission {
@@ -35,4 +37,7 @@ export class UserPermission {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'revoked_at', nullable: true })
+  revokedAt?: Date | null;
 }

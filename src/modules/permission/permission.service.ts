@@ -59,16 +59,12 @@ export class PermissionService {
           `Permission with code ${permissionCode} not found`,
         );
       }
-      await this.userPermissionRepository.upsert(
-        {
-          user: { id: userId },
-          permission: { code: permissionCode },
-          company: { id: companyId },
-          grantedBy: { id: grantedById },
-          revokedBy: null,
-        },
-        ['user', 'permission', 'company'],
-      );
+      await this.userPermissionRepository.save({
+        user: { id: userId },
+        permission: { id: permission.id },
+        company: { id: companyId },
+        grantedBy: { id: grantedById },
+      });
     } catch (error) {
       throw error;
     }
@@ -91,6 +87,12 @@ export class PermissionService {
           revokedBy: { id: revokedById },
         },
       );
+      await this.userPermissionRepository.delete({
+        user: { id: userId },
+        permission: { code: permissionCode },
+        company: { id: companyId },
+        revokedBy: { id: revokedById },
+      });
     } catch (error) {
       throw error;
     }

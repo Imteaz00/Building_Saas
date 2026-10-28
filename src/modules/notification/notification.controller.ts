@@ -108,11 +108,11 @@ export class NotificationController {
   @ApiBearerAuth('Authorization')
   @ApiOperation({ summary: 'Mark an in-app notification as read' })
   async markInAppNotificationAsRead(
-    @Body() notificationIds: string[],
+    @Body() body: { notificationIds: string[] },
     @ActiveUser() activeUser: ActiveUserType,
   ): Promise<void> {
     return await this.notificationService.markInAppNotificationAsRead(
-      notificationIds,
+      body.notificationIds,
       activeUser.sub,
       activeUser.companyId,
     );

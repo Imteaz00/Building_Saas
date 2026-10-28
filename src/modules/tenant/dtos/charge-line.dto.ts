@@ -1,10 +1,11 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
-  IsDecimal,
   IsIn,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -26,7 +27,7 @@ export class LeaseChargeLineDto {
   type: 'rent' | 'service' | 'utility' | 'parking' | 'other';
 
   @IsNotEmpty()
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
   amount: number;
 
   @IsNotEmpty()
@@ -38,11 +39,13 @@ export class LeaseChargeLineDto {
   prorates: boolean;
 
   @IsNotEmpty()
+  @Type(() => Date)
   @IsDate()
   effectiveFrom: Date;
 
   @IsOptional()
   @IsDate()
+  @Type(() => Date)
   effectiveTo: Date | null;
 }
 
