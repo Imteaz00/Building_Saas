@@ -25,6 +25,7 @@ import { convertToResponseDto } from 'src/utils/responseDto';
 import { AnnouncementService } from '../announcement/announcement.service';
 import { TenantService } from '../tenant/tenant.service';
 import { DELIVERY_EVENTS, NOTIFICATION_EVENTS } from 'src/constants/contants';
+import { InAppNotification } from './entities/in-app.entity';
 
 @Injectable()
 export class NotificationService {
@@ -37,6 +38,9 @@ export class NotificationService {
 
     @InjectRepository(NotificationDelivery)
     private deliveryRepository: Repository<NotificationDelivery>,
+
+    @InjectRepository(InAppNotification)
+    private inAppNotificationRepository: Repository<InAppNotification>,
 
     @InjectQueue('delivery-queue')
     private readonly deliveryQueue: Queue,
@@ -326,9 +330,14 @@ export class NotificationService {
         );
       }
 
-      const tenants = await this.tenantService.getActiveTenantsByUnits(
-        announcement.units,
-      );
+      const units = announcement.units?.map((unit) => unit.id);
+      if (!units || units.length === 0) {
+        throw new NotFoundException(
+          'No units associated with the announcement',
+        );
+      }
+
+      const tenants = await this.tenantService.getActiveTenantsByUnits(units);
       if (!tenants || tenants.length === 0) {
         throw new NotFoundException(
           'No active tenants found for the announcement units',
@@ -476,7 +485,7 @@ export class NotificationService {
       );
     }
 
-    this.deliveryQueue.addBulk(
+    await this.deliveryQueue.addBulk(
       deliveries.map((delivery) => ({
         name: delivery.channel,
         data: {
@@ -486,6 +495,34 @@ export class NotificationService {
           payload: delivery.event.payload,
         },
       })),
+    );
+  }
+
+  async getInAppNotificationsByUserId(
+    userId: string,
+    companyId: string,
+  ): Promise<InAppNotification[]> {
+    const notifications = await this.inAppNotificationRepository.find({
+      where: {
+        user: { id: userId },
+        company: { id: companyId },
+      },
+    });
+    return notifications;
+  }
+
+  async markInAppNotificationAsRead(
+    notificationId: string[],
+    userId: string,
+    companyId: string,
+  ): Promise<void> {
+    await this.inAppNotificationRepository.update(
+      {
+        id: In(notificationId),
+        user: { id: userId },
+        company: { id: companyId },
+      },
+      { readAt: new Date() },
     );
   }
 }

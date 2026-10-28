@@ -6,13 +6,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Announcement } from './announcement.entity';
 import { Repository } from 'typeorm';
-import { AnnouncementDto, AnnouncementResponseDto } from './announements.dto';
 import type { ActiveUserType } from 'src/interfaces/active-user.interface';
 import { PropertyService } from '../property/property.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { convertToResponseDto } from 'src/utils/responseDto';
 import { NOTIFICATION_EVENTS } from 'src/constants/contants';
+import { AnnouncementDto } from './announements.dto';
 
 @Injectable()
 export class AnnouncementService {
@@ -29,7 +28,7 @@ export class AnnouncementService {
   async createAnnouncement(
     announcement: AnnouncementDto,
     activeUser: ActiveUserType,
-  ): Promise<AnnouncementResponseDto> {
+  ): Promise<Announcement> {
     const companyId = activeUser.companyId;
     const buildingId = announcement.buildingId;
 
@@ -90,18 +89,24 @@ export class AnnouncementService {
       },
     );
 
-    return convertToResponseDto(AnnouncementResponseDto, savedAnnouncement);
+    return savedAnnouncement;
   }
 
-  async getAnnouncementById(
-    announcementId: string,
-  ): Promise<AnnouncementResponseDto> {
+  async getAnnouncementById(announcementId: string): Promise<Announcement> {
     const announcement = await this.announcementRepository.findOne({
       where: { id: announcementId },
+      relations: { units: true },
     });
     if (!announcement) {
       throw new NotFoundException('Announcement not found');
     }
-    return convertToResponseDto(AnnouncementResponseDto, announcement);
+    return announcement;
+  }
+
+  async getAnnouncementsByCompany(companyId: string): Promise<Announcement[]> {
+    return await this.announcementRepository.find({
+      where: { building: { company: { id: companyId } } },
+      relations: { building: true },
+    });
   }
 }

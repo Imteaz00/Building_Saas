@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { NotificationEvent } from './event.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { Company } from 'src/modules/company/company.entity';
 
 @Entity()
 export class InAppNotification {
@@ -16,6 +17,9 @@ export class InAppNotification {
 
   @ManyToOne(() => User, { nullable: false })
   user: User;
+
+  @ManyToOne(() => Company, { nullable: false })
+  company: Company;
 
   @ManyToOne(() => NotificationEvent, { nullable: false })
   event: NotificationEvent;
@@ -33,16 +37,12 @@ export class InAppNotification {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    nullable: true,
   })
-  updatedAt: Date;
+  updatedAt?: Date | null;
 }

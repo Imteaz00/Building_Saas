@@ -8,7 +8,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompanyModule } from './modules/company/company.module';
 import { UserModule } from './modules/user/user.module';
-import { RoleModule } from './modules/role/role.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { DocumentModule } from './modules/document/document.module';
@@ -25,6 +25,7 @@ import { BcryptProvider } from './providers/bcrypt.provider';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { BullModule } from '@nestjs/bullmq';
+import { RoleModule } from './modules/role/role.module';
 
 const ENV = process.env.NODE_ENV;
 @Module({
@@ -84,6 +85,7 @@ const ENV = process.env.NODE_ENV;
     CompanyModule,
     UserModule,
     RoleModule,
+    PermissionModule,
     AuditLogModule,
     NotificationModule,
     DocumentModule,

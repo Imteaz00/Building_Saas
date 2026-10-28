@@ -17,6 +17,8 @@ import {
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ActiveUser } from 'src/decorators/active-user.decorator';
 import type { ActiveUserType } from 'src/interfaces/active-user.interface';
+import { InAppNotificationResponseDto } from './dtos/in-app.dto';
+import { convertToResponseDto } from 'src/utils/responseDto';
 
 @Controller('notification')
 export class NotificationController {
@@ -82,6 +84,37 @@ export class NotificationController {
     return await this.notificationService.retryEventDeliveries(
       eventId,
       activeUser,
+    );
+  }
+
+  @Get('in-app')
+  @ApiBearerAuth('Authorization')
+  @ApiOperation({ summary: 'Get all in-app notifications for the active user' })
+  async getInAppNotifications(
+    @ActiveUser() activeUser: ActiveUserType,
+  ): Promise<InAppNotificationResponseDto[]> {
+    const query = await this.notificationService.getInAppNotificationsByUserId(
+      activeUser.sub,
+      activeUser.companyId,
+    );
+
+    const responseDtos = query.map((notification) =>
+      convertToResponseDto(InAppNotificationResponseDto, notification),
+    );
+    return responseDtos;
+  }
+
+  @Patch('in-app/mark-as-read')
+  @ApiBearerAuth('Authorization')
+  @ApiOperation({ summary: 'Mark an in-app notification as read' })
+  async markInAppNotificationAsRead(
+    @Body() body: { notificationIds: string[] },
+    @ActiveUser() activeUser: ActiveUserType,
+  ): Promise<void> {
+    return await this.notificationService.markInAppNotificationAsRead(
+      body.notificationIds,
+      activeUser.sub,
+      activeUser.companyId,
     );
   }
 }

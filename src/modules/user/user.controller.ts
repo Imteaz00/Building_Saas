@@ -92,7 +92,7 @@ export class UserController {
   @AllowAnonymous()
   @ApiOperation({ summary: 'Refresh access token using a refresh token' })
   async refreshAccessToken(
-    @Body('refreshToken') refreshToken: string,
+    @Body() refreshToken: string,
   ): Promise<{ accessToken: string; accessTokenExpiresAt: Date }> {
     return await this.authService.refreshAccessToken(refreshToken);
   }

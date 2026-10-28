@@ -1,16 +1,14 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import {
   IsDateString,
   IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
-  Min,
 } from 'class-validator';
 
 export class LeaseDto {
@@ -21,10 +19,6 @@ export class LeaseDto {
   @IsUUID()
   @IsNotEmpty()
   tenantId: string;
-
-  @IsUUID()
-  @IsOptional()
-  previousLease?: string | null;
 
   @IsDateString()
   @IsNotEmpty()
@@ -54,27 +48,6 @@ export class LeaseDto {
   @IsNotEmpty()
   @MaxLength(255)
   renewalTerms: string;
-
-  @IsNotEmpty()
-  @IsIn(['active', 'draft', 'expiring', 'expired', 'terminated', 'renewed'])
-  status:
-    'active' | 'draft' | 'expiring' | 'expired' | 'terminated' | 'renewed';
-
-  @IsOptional()
-  @IsDateString()
-  activatedAt: Date | null;
-
-  @IsOptional()
-  @IsUUID()
-  activatedBy: string | null;
-
-  @IsOptional()
-  @IsDateString()
-  terminatedAt: Date | null;
-
-  @IsOptional()
-  @IsString()
-  terminationReason: string | null;
 }
 
 export class UpdateLeaseDto extends PartialType(
@@ -86,18 +59,6 @@ export class LeaseResponseDto {
   @Expose()
   @ApiProperty({ description: 'The unique identifier of the lease' })
   id: string;
-
-  @Expose()
-  @ApiProperty({ description: 'The unique identifier of the unit' })
-  unitId: string;
-
-  @Expose()
-  @ApiProperty({ description: 'The unique identifier of the tenant' })
-  tenantId: string;
-
-  @Expose()
-  @ApiProperty({ description: 'The unique identifier of the previous lease' })
-  previousLease?: string | null;
 
   @Expose()
   @ApiProperty({ description: 'The start date of the lease' })
@@ -137,12 +98,6 @@ export class LeaseResponseDto {
     description: 'The date and time when the lease was activated',
   })
   activatedAt: Date | null;
-
-  @Expose()
-  @ApiProperty({
-    description: 'The unique identifier of the user who activated the lease',
-  })
-  activatedBy: string | null;
 
   @Expose()
   @ApiProperty({

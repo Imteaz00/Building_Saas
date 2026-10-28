@@ -5,6 +5,7 @@ import { Company } from './modules/company/company.entity';
 import { BcryptProvider } from './providers/bcrypt.provider';
 import { User } from './modules/user/entities/user.entity';
 import { DEFAULT_NOTIFICATION_TEMPLATES } from './constants/default-notification-templates';
+import { PERMISSIONS } from './constants/permission';
 
 @Injectable()
 export class SystemInitService implements OnModuleInit {
@@ -95,6 +96,19 @@ export class SystemInitService implements OnModuleInit {
         throw new Error(
           'Failed to seed notification templates. Please check the error: ' +
             error,
+        );
+      }
+
+      try {
+        for (const permission of PERMISSIONS) {
+          await manager.upsert('permission', permission, [
+            'code',
+            'description',
+          ]);
+        }
+      } catch (error) {
+        throw new Error(
+          'Failed to seed permissions. Please check the error: ' + error,
         );
       }
     });
